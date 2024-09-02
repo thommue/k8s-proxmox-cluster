@@ -1,4 +1,4 @@
-# kuberneteseSetup
+# SimpleKuberneteseSetup
 
 
 
@@ -15,14 +15,14 @@ Already a pro? Just edit this README.md and make it your own. Want to make it ea
 
 ```
 cd existing_repo
-git remote add origin https://gitlab.tomsgitlab.xyz/infrastructureascode/kubernetese/kubernetesesetup.git
+git remote add origin https://gitlab.com/tomscoding/infrastructure/simplekubernetesesetup.git
 git branch -M main
 git push -uf origin main
 ```
 
 ## Integrate with your tools
 
-- [ ] [Set up project integrations](https://gitlab.tomsgitlab.xyz/infrastructureascode/kubernetese/kubernetesesetup/-/settings/integrations)
+- [ ] [Set up project integrations](https://gitlab.com/tomscoding/infrastructure/simplekubernetesesetup/-/settings/integrations)
 
 ## Collaborate with your team
 

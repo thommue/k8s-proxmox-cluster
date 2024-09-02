@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "kubesetup"
+version = "0.1.0"
+description = "A cli to install simple and complex kubernetese cluster"
+authors = ["Thomas Mueller"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+click = "^8.1.7"
+black = "^24.4.2"
+proxmoxer = "^2.0.1"
+paramiko = "^3.4.0"
+jinja2 = "^3.1.4"
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.11.0"
+pytest = "^8.3.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
