@@ -33,7 +33,8 @@ def simple_cluster_setup(
     proxmox.make_required_restarts(vm_infos=vm_config)
 
     cluster_setup = SimpleKubernetesClusterSetup(vm_infos=vm_config)
-    cluster_setup.preconfigure_vms()
+    vm_infos_grouped = cluster_setup.preconfigure_vms()
+    cluster_setup.setup_cluster(vm_infos_grouped=vm_infos_grouped)
 
 
 

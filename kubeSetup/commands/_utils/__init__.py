@@ -4,7 +4,8 @@ __all__ = [
     "ProxmoxCommands",
     "parse_vm_config_file",
     "VmConf",
-    "SimpleKubernetesClusterSetup"
+    "SimpleKubernetesClusterSetup",
+    "VmType"
 ]
 
 
@@ -13,6 +14,7 @@ from ._setup import (
     ProxmoxConnection,
     parse_vm_config_file,
     VmConf,
+    VmType
 )
 from ._proxmox import ProxmoxCommands
 from ._simpleCluster import SimpleKubernetesClusterSetup

@@ -1,12 +1,19 @@
 import json
 import click
+from enum import Enum
 from typing import Any, Optional
 from dataclasses import dataclass
+
+
+class VmType(Enum):
+    MASTER = "MASTER"
+    WORKER = "WORKER"
 
 
 @dataclass
 class VmConf:
     vm_name: str
+    vm_type: VmType
     target_name: str
     vm_id: int
     clone_type: int
@@ -23,6 +30,7 @@ def _converter(conf: Any) -> VmConf:
     try:
         configuration = VmConf(
             vm_name=conf["vm_name"],
+            vm_type=VmType(conf["vm_type"].upper()),
             target_name=conf["target_name"],
             vm_id=conf["vm_id"],
             clone_type=conf["clone_type"],
