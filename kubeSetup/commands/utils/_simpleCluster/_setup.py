@@ -5,7 +5,7 @@ from time import sleep
 from itertools import groupby
 from paramiko.client import SSHClient
 from jinja2 import Environment, FileSystemLoader
-from kubeSetup.commands._utils import VmConf, VmType
+from kubeSetup.commands.utils import SimpleVmConf, VmType
 from ._setup_utils import update_upgrade_cmd, conf_sysctl, turnoff_swap, install_containerd, configure_containerd, install_kube_pkgs, setup_calico, kubeadm_init
 
 
@@ -14,10 +14,10 @@ logger = logging.getLogger("KubeSetup Logger")
 
 
 class SimpleKubernetesClusterSetup:
-    def __init__(self, vm_infos: list[VmConf]) -> None:
+    def __init__(self, vm_infos: list[SimpleVmConf]) -> None:
         self.vm_infos = vm_infos
 
-    def preconfigure_vms(self) -> dict[str, list[VmConf]]:
+    def preconfigure_vms(self) -> dict[str, list[SimpleVmConf]]:
 
         client = self.setup_client()
 
@@ -63,7 +63,7 @@ class SimpleKubernetesClusterSetup:
 
         return vm_infos_grouped
 
-    def setup_cluster(self, vm_infos_grouped: dict[str, list[VmConf]]) -> None:
+    def setup_cluster(self, vm_infos_grouped: dict[str, list[SimpleVmConf]]) -> None:
 
         # init the cluster on master node
         client = self.setup_client()
@@ -110,7 +110,7 @@ class SimpleKubernetesClusterSetup:
 
         sftp.close()
 
-    def _join_worker_nodes(self, vm_infos_grouped: dict[str, list[VmConf]], kubeadm_cmd: str) -> None:
+    def _join_worker_nodes(self, vm_infos_grouped: dict[str, list[SimpleVmConf]], kubeadm_cmd: str) -> None:
 
         client = self.setup_client()
 

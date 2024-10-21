@@ -2,8 +2,8 @@ import click
 import json
 import pytest
 from click.testing import CliRunner
-from kubeSetup.commands._utils import parse_proxmox_config_file, ProxmoxConnection
-
+from kubeSetup.commands.utils import parse_proxmox_config_file
+from kubeSetup.commands.utils._setup import ProxmoxConnection
 
 test_conf = {
     "url": "test.net",

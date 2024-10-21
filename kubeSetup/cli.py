@@ -9,6 +9,7 @@ def cli() -> None:
 
 
 cli.add_command(simple_cluster_setup)
+cli.add_command(complex_cluster_setup)
 
 
 if __name__ == "__main__":

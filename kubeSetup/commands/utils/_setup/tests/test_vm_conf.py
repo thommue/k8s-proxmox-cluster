@@ -2,7 +2,7 @@ import click
 import json
 import pytest
 from click.testing import CliRunner
-from kubeSetup.commands._utils import parse_vm_config_file, VmConf
+from kubeSetup.commands.utils import parse_vm_config_file, VmConf
 
 test_conf_01 = [
     {

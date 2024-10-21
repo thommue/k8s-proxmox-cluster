@@ -1,17 +1,7 @@
 import json
 import click
 from typing import Any
-from dataclasses import dataclass
-
-
-@dataclass
-class ProxmoxConnection:
-    proxmox_user: str
-    url: str
-    token_name: str
-    token: str
-    ssl_verify: bool
-    template_id: int
+from ._schemas import ProxmoxConnection
 
 
 def _converter(conf: dict[str, Any]) -> ProxmoxConnection:

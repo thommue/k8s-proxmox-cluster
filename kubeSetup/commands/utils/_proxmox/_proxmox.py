@@ -2,7 +2,7 @@ import logging
 from typing import Any
 from proxmoxer import ProxmoxAPI  # type: ignore
 from time import sleep, perf_counter
-from kubeSetup.commands._utils import ProxmoxConnection, VmConf
+from .._setup import SimpleVmConf, ComplexVmConf, ProxmoxConnection
 
 
 logging.basicConfig(level=logging.INFO)
@@ -21,7 +21,7 @@ class ProxmoxCommands:
         )
         self.template_id = proxmox_conf.template_id
 
-    def clone_vm(self, vm_infos: list[VmConf]) -> None:
+    def clone_vm(self, vm_infos: list[SimpleVmConf | ComplexVmConf]) -> None:
         for vm in vm_infos:
             clone_task = (
                 self.proxmox.nodes(vm.target_name)
@@ -63,7 +63,7 @@ class ProxmoxCommands:
             sleep(15)
             logger.info(f"{vm.vm_id} - {vm.vm_name} is up and in starting progress\n")
 
-    def make_required_restarts(self, vm_infos: list[VmConf]):
+    def make_required_restarts(self, vm_infos: list[SimpleVmConf | ComplexVmConf]):
         """
         Tries to SSH into the VM and checks if connection can be established.
         If the connection is established, it will be restarted the vm.
