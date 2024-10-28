@@ -1,0 +1,28 @@
+global_defs {
+    router_id LVS_DEVEL
+}
+vrrp_script chk_apiserver {
+    script "/etc/keepalived/check_apiserver.sh"
+    interval 3    # Check every 3 seconds
+    timeout 4     # Timeout if it takes more than 2 seconds
+    fall 10        # Fail after 2 consecutive failures
+    rise 2        # Recover after 1 successful check
+}
+
+vrrp_instance VI_1 {
+    state {{ node_state }}
+    interface {{ node_interface }}
+    virtual_router_id {{ virtual_router_id }}
+    priority {{ node_prio }}
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass {{ auth_pass }}
+    }
+    virtual_ipaddress {
+        {{ virtual_ip }}
+    }
+    track_script {
+        chk_apiserver
+    }
+}

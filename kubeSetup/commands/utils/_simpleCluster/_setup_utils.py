@@ -1,22 +1,7 @@
 from time import sleep
 from logging import Logger
 from paramiko.client import SSHClient
-
-
-def _execute_command(cmd: str, client: SSHClient, logger: Logger) -> tuple[str, str]:
-    """Execute a single SSH command and log its output."""
-    stdin, stdout, stderr = client.exec_command(cmd)
-    stdout_str, stderr_str = stdout.read().decode(), stderr.read().decode()
-    logger.info(f"{cmd}: {stdout_str} | {stderr_str}")
-    return stdout_str, stderr_str
-
-
-def _execute_commands(cmds: list[str], client: SSHClient, logger: Logger) -> None:
-    """Execute a list of commands with a delay and log output."""
-    for cmd in cmds:
-        sleep(1)
-        _execute_command(cmd, client, logger)
-        sleep(1)
+from .._setupUtils import execute_command, execute_commands, update_upgrade_cmd
 
 
 def _modify_file(client: SSHClient, file_path: str, settings: list[str], uncomment: bool, logger: Logger, replace: str = "") -> None:
@@ -41,12 +26,6 @@ def _modify_file(client: SSHClient, file_path: str, settings: list[str], uncomme
     stdin.flush()
 
 
-def update_upgrade_cmd(client: SSHClient, upgrade: bool, logger: Logger) -> None:
-    _execute_command("sudo apt-get update", client, logger=logger)
-    if upgrade:
-        _execute_command("sudo apt-get upgrade -y", client, logger=logger)
-
-
 def conf_sysctl(client: SSHClient, logger: Logger) -> None:
     """Configure sysctl settings."""
     settings = ["net.ipv4.ip_forward=1", "net.ipv6.conf.all.forwarding=1"]
@@ -57,16 +36,16 @@ def conf_sysctl(client: SSHClient, logger: Logger) -> None:
         uncomment=True,
         logger=logger
     )
-    _execute_command("sudo sysctl -p", client, logger)
+    execute_command("sudo sysctl -p", client, logger)
 
 
 def turnoff_swap(client: SSHClient, logger: Logger) -> None:
     swap_commands = ["sudo swapoff -a", "sudo sed -i '/swap/d' /etc/fstab"]
-    _execute_commands(swap_commands, client, logger)
+    execute_commands(swap_commands, client, logger)
 
 
 def install_containerd(client: SSHClient, logger: Logger) -> None:
-    _execute_command("sudo apt-get install apt-transport-https ca-certificates curl jq -y", client, logger)
+    execute_command("sudo apt-get install apt-transport-https ca-certificates curl jq -y", client, logger)
     sleep(5)
     preconf_cmds = [
         "sudo install -m 0755 -d /etc/apt/keyrings",
@@ -74,16 +53,16 @@ def install_containerd(client: SSHClient, logger: Logger) -> None:
         'echo deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null',
         "cat /etc/apt/sources.list.d/docker.list"
     ]
-    _execute_commands(cmds=preconf_cmds, client=client, logger=logger)
+    execute_commands(cmds=preconf_cmds, client=client, logger=logger)
     update_upgrade_cmd(client=client, upgrade=False, logger=logger)
     sleep(2)
-    _execute_command("sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y", client, logger)
+    execute_command("sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y", client, logger)
     sleep(15)
 
 
 def configure_containerd(client: SSHClient, logger: Logger) -> None:
     """Configure containerd to use systemd as the cgroup driver."""
-    _execute_command("sudo containerd config default | sudo tee /etc/containerd/config.toml", client, logger)
+    execute_command("sudo containerd config default | sudo tee /etc/containerd/config.toml", client, logger)
     _modify_file(
         client=client,
         file_path="/etc/containerd/config.toml",
@@ -92,7 +71,7 @@ def configure_containerd(client: SSHClient, logger: Logger) -> None:
         logger=logger,
         replace="SystemdCgroup = true"
     )
-    _execute_command("sudo systemctl restart containerd", client, logger)
+    execute_command("sudo systemctl restart containerd", client, logger)
 
 
 def install_kube_pkgs(client: SSHClient, logger: Logger) -> None:
@@ -101,7 +80,7 @@ def install_kube_pkgs(client: SSHClient, logger: Logger) -> None:
         "echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list",
         "cat /etc/apt/sources.list.d/kubernetes.list"
     ]
-    _execute_commands(cmds=preconf_cmds, client=client, logger=logger)
+    execute_commands(cmds=preconf_cmds, client=client, logger=logger)
     sleep(10)
     update_upgrade_cmd(client=client, upgrade=False, logger=logger)
     sleep(2)
@@ -109,7 +88,7 @@ def install_kube_pkgs(client: SSHClient, logger: Logger) -> None:
         "sudo apt-get install kubelet kubeadm kubectl -y",
         "sudo kubeadm config images pull"
     ]
-    _execute_commands(cmds=install_pull_cmd, client=client, logger=logger)
+    execute_commands(cmds=install_pull_cmd, client=client, logger=logger)
     sleep(15)
 
 
@@ -128,12 +107,12 @@ def kubeadm_init(client: SSHClient, logger: Logger) -> str:
         "sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config",
         "sudo chown $(id -u):$(id -g) $HOME/.kube/config",
     ]
-    _execute_commands(kube_home_cmds, client, logger)
+    execute_commands(kube_home_cmds, client, logger)
 
     return kubeadm_cmd
 
 
 def setup_calico(client: SSHClient, logger: Logger) -> None:
     """Install Calico networking plugin."""
-    _execute_command("kubectl apply -f calico.yaml", client, logger)
+    execute_command("kubectl apply -f calico.yaml", client, logger)
     sleep(30)

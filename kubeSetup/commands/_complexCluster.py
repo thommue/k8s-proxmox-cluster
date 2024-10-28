@@ -1,5 +1,5 @@
 import click
-from .utils import parse_proxmox_config_file, parse_complex_vm_config_file, ComplexVmConf
+from .utils import parse_proxmox_config_file, parse_complex_vm_config_file, ComplexVmConf, ProxmoxCommands, KeepaLivedSetup
 from .utils._setup import ProxmoxConnection
 
 
@@ -30,6 +30,12 @@ def complex_cluster_setup(
     click.echo(f"The config proxmox file {proxmox_config}")
     click.echo(f"The config vm file {vm_haconfig}")
 
+    # proxmox = ProxmoxCommands(proxmox_conf=proxmox_config)
+    # proxmox.clone_vm(vm_infos=vm_haconfig)
+    # proxmox.make_required_restarts(vm_infos=vm_haconfig)
+
+    keepalived = KeepaLivedSetup(vm_infos=vm_haconfig)
+    keepalived.configure_keepalived()
 
 
 if __name__ == "__main__":

@@ -6,8 +6,8 @@ from itertools import groupby
 from paramiko.client import SSHClient
 from jinja2 import Environment, FileSystemLoader
 from kubeSetup.commands.utils import SimpleVmConf, VmType
-from ._setup_utils import update_upgrade_cmd, conf_sysctl, turnoff_swap, install_containerd, configure_containerd, install_kube_pkgs, setup_calico, kubeadm_init
-
+from ._setup_utils import conf_sysctl, turnoff_swap, install_containerd, configure_containerd, install_kube_pkgs, setup_calico, kubeadm_init
+from .._setupUtils._general_commands import update_upgrade_cmd
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("KubeSetup Logger")

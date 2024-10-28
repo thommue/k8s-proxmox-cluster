@@ -6,9 +6,13 @@ __all__ = [
     "SimpleKubernetesClusterSetup",
     "VmType",
     "parse_complex_vm_config_file",
-    "ComplexVmConf"
+    "ComplexVmConf",
+    "execute_command",
+    "execute_commands",
+    "update_upgrade_cmd",
+    "setup_client",
+    "KeepaLivedSetup"
 ]
-
 
 from ._setup import (
     parse_proxmox_config_file,
@@ -20,3 +24,5 @@ from ._setup import (
 )
 from ._proxmox import ProxmoxCommands
 from ._simpleCluster import SimpleKubernetesClusterSetup
+from ._setupUtils import execute_command, execute_commands, update_upgrade_cmd, setup_client
+from ._complexCluster import KeepaLivedSetup
