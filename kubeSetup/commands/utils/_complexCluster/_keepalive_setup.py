@@ -2,7 +2,7 @@ import os
 import logging
 import paramiko
 from jinja2 import Environment, FileSystemLoader
-from kubeSetup.commands.utils import ComplexVmConf, setup_client, update_upgrade_cmd, execute_command, execute_commands
+from kubeSetup.commands.utils import ComplexVmConf, VmType, setup_client, update_upgrade_cmd, execute_command, execute_commands, NodeType, get_pwd
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Keepalived Logger")
@@ -16,31 +16,27 @@ class KeepaLivedSetup:
         client = setup_client()
 
         for vm in self.vm_infos:
-            private_key = paramiko.RSAKey.from_private_key_file(vm.ssh_key)
-            client.connect(vm.ip_address.split("/")[0], 22, vm.user, pkey=private_key)
+            if vm.vm_type == VmType.LOADBALANCER:
+                private_key = paramiko.RSAKey.from_private_key_file(vm.ssh_key)
+                client.connect(vm.ip_address, 22, vm.user, pkey=private_key)
 
-            # update and upgrade the vm
-            update_upgrade_cmd(client=client, upgrade=True, logger=logger)
+                # update and upgrade the vm
+                update_upgrade_cmd(client=client, upgrade=True, logger=logger)
 
-            # install keepalived
-            execute_command(
-                cmd="sudo apt install keepalived -y",
-                client=client,
-                logger=logger,
-            )
+                # install keepalived
+                execute_command(
+                    cmd="sudo apt install keepalived -y",
+                    client=client,
+                    logger=logger,
+                )
 
-            # generate conf and transfer conf file
-            self._keepalived_setup(client=client, node_state="MASTER", virtual_ip=vm.virtual_ip_address)
+                # generate conf and transfer conf file
+                self._keepalived_setup(client=client, node_state=vm.node_state, virtual_ip=vm.virtual_ip_address)
 
-    def _keepalived_setup(self, client: paramiko.SSHClient, node_state: str, virtual_ip: str):
-        stdout_str, _ = execute_command(
-                cmd="pwd",
-                client=client,
-                logger=logger,
-            )
-        pwd = stdout_str.split("\n")[0]
+    def _keepalived_setup(self, client: paramiko.SSHClient, node_state: NodeType, virtual_ip: str):
+        pwd = get_pwd(client=client, logger=logger)
 
-        temp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_templates")
+        temp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
 
         sftp = client.open_sftp()
 
@@ -48,7 +44,7 @@ class KeepaLivedSetup:
         with sftp.open(f"{pwd}/keepalived.conf", "w") as remote_file:
             remote_file.write(
                 self.setup_keepalived_conf(
-                    node_state=node_state,
+                    node_state=node_state.value,
                     node_interface="eth0",
                     virtual_router_id="51",
                     node_prio="100",
@@ -66,20 +62,20 @@ class KeepaLivedSetup:
                 )
             )
 
+        sftp.close()
+
         # move the files to the right position
         cmds = [
             "sudo mv keepalived.conf /etc/keepalived/keepalived.conf",
             "sudo mv check_apiserver.sh /etc/keepalived/check_apiserver.sh",
-            # "sudo systemctl start keepalived",
-            # "sudo systemctl enable keepalived"
+            "sudo systemctl start keepalived",
+            "sudo systemctl enable keepalived"
         ]
         execute_commands(
             cmds=cmds,
             client=client,
             logger=logger,
         )
-
-        sftp.close()
 
     @staticmethod
     def setup_keepalived_conf(

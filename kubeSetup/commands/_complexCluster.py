@@ -1,6 +1,16 @@
 import click
-from .utils import parse_proxmox_config_file, parse_complex_vm_config_file, ComplexVmConf, ProxmoxCommands, KeepaLivedSetup
-from .utils._setup import ProxmoxConnection
+from .utils import (
+    parse_proxmox_config_file,
+    parse_complex_vm_config_file,
+    ComplexVmConf,
+    ProxmoxCommands,
+    KeepaLivedSetup,
+    HAProxySetup,
+    ProxmoxConnection,
+    PreconfigureCluster,
+    ClusterSetup,
+    ClusterType
+)
 
 
 @click.command()
@@ -34,8 +44,20 @@ def complex_cluster_setup(
     # proxmox.clone_vm(vm_infos=vm_haconfig)
     # proxmox.make_required_restarts(vm_infos=vm_haconfig)
 
+    # set up keepalived and haproxy for HA
     keepalived = KeepaLivedSetup(vm_infos=vm_haconfig)
     keepalived.configure_keepalived()
+
+    haproxy = HAProxySetup(vm_infos=vm_haconfig)
+    haproxy.configure_haproxy()
+
+    # preconfigure the cluster
+    preconf = PreconfigureCluster(vm_infos=vm_haconfig)
+    grouped_vms = preconf.preconfigure_vms()
+
+    # set up the cluster in HA Mode with stacked ectd
+
+
 
 
 if __name__ == "__main__":

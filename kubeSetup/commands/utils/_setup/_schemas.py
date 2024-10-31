@@ -9,6 +9,11 @@ class VmType(Enum):
     LOADBALANCER = "LOADBALANCER"
 
 
+class NodeType(Enum):
+    MASTER = "MASTER"
+    BACKUP = "BACKUP"
+
+
 @dataclass
 class SimpleVmConf:
     vm_name: str
@@ -28,6 +33,7 @@ class SimpleVmConf:
 @dataclass
 class ComplexVmConf(SimpleVmConf):
     virtual_ip_address: str = None
+    node_state: NodeType = None
 
 
 @dataclass

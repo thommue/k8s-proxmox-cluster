@@ -1,6 +1,15 @@
 import click
-from .utils import parse_proxmox_config_file, parse_simple_vm_config_file, SimpleVmConf, ProxmoxCommands, SimpleKubernetesClusterSetup
-from kubeSetup.commands.utils._setup import ProxmoxConnection
+from .utils import (
+    parse_proxmox_config_file,
+    parse_simple_vm_config_file,
+    SimpleVmConf,
+    ProxmoxCommands,
+    SimpleKubernetesClusterSetup,
+    PreconfigureCluster,
+    ProxmoxConnection,
+    ClusterSetup,
+    ClusterType
+)
 
 
 @click.command()
@@ -29,13 +38,20 @@ def simple_cluster_setup(
     click.echo(f"The config proxmox file {proxmox_config}")
     click.echo(f"The config vm file {vm_config}")
 
+    # all proxmox calls for cloning from a template
     proxmox = ProxmoxCommands(proxmox_conf=proxmox_config)
     proxmox.clone_vm(vm_infos=vm_config)
     proxmox.make_required_restarts(vm_infos=vm_config)
 
-    cluster_setup = SimpleKubernetesClusterSetup(vm_infos=vm_config)
-    vm_infos_grouped = cluster_setup.preconfigure_vms()
-    cluster_setup.setup_cluster(vm_infos_grouped=vm_infos_grouped)
+    # preconfigure the cluster
+    preconf = PreconfigureCluster(vm_infos=vm_config)
+    grouped_vms = preconf.preconfigure_vms()
+
+    # set up the simple cluster
+    ClusterSetup.setup_cluster(group_vms=grouped_vms, cluster_type=ClusterType.SIMPLE)
+
+    # cluster_setup = SimpleKubernetesClusterSetup(vm_infos=vm_config)
+    # cluster_setup.setup_cluster(group_vms=grouped_vms)
 
 
 if __name__ == "__main__":

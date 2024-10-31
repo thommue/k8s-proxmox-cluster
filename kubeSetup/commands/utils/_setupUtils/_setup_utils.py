@@ -1,7 +1,7 @@
 from time import sleep
 from logging import Logger
 from paramiko.client import SSHClient
-from .._setupUtils import execute_command, execute_commands, update_upgrade_cmd
+from ._general_commands import execute_command, execute_commands, update_upgrade_cmd
 
 
 def _modify_file(client: SSHClient, file_path: str, settings: list[str], uncomment: bool, logger: Logger, replace: str = "") -> None:

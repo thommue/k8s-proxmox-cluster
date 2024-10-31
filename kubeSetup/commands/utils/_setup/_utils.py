@@ -1,6 +1,6 @@
 import click
 from typing import Any
-from ._schemas import ComplexVmConf, SimpleVmConf, VmType
+from ._schemas import ComplexVmConf, SimpleVmConf, VmType, NodeType
 
 
 def _converter(conf: Any, simple: bool) -> SimpleVmConf | ComplexVmConf:
@@ -35,6 +35,7 @@ def _converter(conf: Any, simple: bool) -> SimpleVmConf | ComplexVmConf:
                 user=conf["user"],
                 ssh_key=conf["ssh_key"],
                 virtual_ip_address=conf["virtual_ip_address"] if VmType(conf["vm_type"].upper()) == VmType.LOADBALANCER else None,
+                node_state=conf["node_state"] if NodeType(conf["node_state"].upper()) in conf.keys() else None,
             )
 
         if (

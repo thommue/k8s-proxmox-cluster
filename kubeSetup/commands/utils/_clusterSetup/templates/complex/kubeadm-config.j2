@@ -1,0 +1,16 @@
+---
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: ClusterConfiguration
+controlPlaneEndpoint: "{{ control_plane_endpoint }}:6443"  # Virtual IP or load balancer IP with port
+networking:
+  podSubnet: {{ pod_subnet }}/16
+  serviceSubnet: {{ service_subnet }}/16
+---
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: InitConfiguration
+localAPIEndpoint:
+  advertiseAddress: "{{ ip_address }}"
+  bindPort: 6443
+nodeRegistration:
+  kubeletExtraArgs:
+    node-ip: {{ ip_address }}

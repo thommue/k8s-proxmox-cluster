@@ -2,9 +2,10 @@ import os
 import logging
 import paramiko
 from time import sleep
+from ._schemas import ClusterType
 from paramiko.client import SSHClient
-from .._setup import SimpleVmConf, VmType
 from jinja2 import Environment, FileSystemLoader
+from .._setup import SimpleVmConf, ComplexVmConf, VmType
 from .._setupUtils import setup_client, get_pwd, kubeadm_init, setup_calico
 
 
@@ -12,36 +13,53 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("KubeSetup Logger")
 
 
-class SimpleKubernetesClusterSetup:
-    def __init__(self, vm_infos: list[SimpleVmConf]) -> None:
-        self.vm_infos = vm_infos
+class ClusterSetup:
 
-    def setup_cluster(self, group_vms: dict[str, list[SimpleVmConf]]) -> None:
+    @classmethod
+    def setup_cluster(cls, group_vms: dict[str, list[SimpleVmConf | ComplexVmConf]], cluster_type: ClusterType):
         # configure ssh connection to main master vm
         client = setup_client(group_vms=group_vms)
 
-        # get temp path from vm and of the templates
+        # get the root directory from the vm, just to move the files there
         pwd = get_pwd(client=client, logger=logger)
-        temp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
 
         # establish sftp
         sftp = client.open_sftp()
 
-        # setup kubeadm
-        with sftp.open(f"{pwd}/kubeadm-config.yaml", "w") as remote_file:
-            remote_file.write(
-                self.setup_kubeadm_conf(
-                    ip_address=master_vm.ip_address,
-                    pod_subnet="10.244.0.0",
-                    service_subnet="10.96.0.0",
-                    temp_path=temp_path
+        # get the right templates
+        if cluster_type == ClusterType.SIMPLE:
+            temp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "simple")
+
+            # setup kubeadm simple
+            with sftp.open(f"{pwd}/kubeadm-config.yaml", "w") as remote_file:
+                remote_file.write(
+                    cls.setup_kubeadm_conf(
+                        ip_address=group_vms[VmType.MASTER.name][0].ip_address,
+                        pod_subnet="10.244.0.0",
+                        service_subnet="10.96.0.0",
+                        temp_path=temp_path
+                    )
                 )
-            )
+
+        else:
+            temp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "complex")
+
+            # setup kubeadm complex
+            with sftp.open(f"{pwd}/kubeadm-config.yaml", "w") as remote_file:
+                remote_file.write(
+                    cls.setup_kubeadm_conf(
+                        ip_address=group_vms[VmType.MASTER.name][0].ip_address,
+                        pod_subnet="10.244.0.0",
+                        service_subnet="10.96.0.0",
+                        control_plane_endpoint="",
+                        temp_path=temp_path
+                    )
+                )
 
         # setup calico
         with sftp.open(f"{pwd}/calico.yaml", "w") as remote_file:
             remote_file.write(
-                self.setup_calico(
+                cls.setup_calico(
                     pod_subnet="10.244.0.0",
                     temp_path=temp_path
                 )
@@ -57,7 +75,7 @@ class SimpleKubernetesClusterSetup:
         setup_calico(client=client, logger=logger)
 
         # join the worker nodes
-        self._join_worker_nodes(vm_infos_grouped=group_vms, client=client, kubeadm_cmd=kubeadm_cmd)
+        cls._join_worker_nodes(vm_infos_grouped=group_vms, client=client, kubeadm_cmd=kubeadm_cmd)
 
     @staticmethod
     def setup_kubeadm_conf(

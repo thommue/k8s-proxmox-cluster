@@ -42,7 +42,7 @@ class ProxmoxCommands:
             sleep(10)
 
             self.proxmox.nodes(vm.target_name).qemu(vm.vm_id).config.set(
-                ipconfig0=f"ip={vm.ip_address},gw={vm.ip_gw}"
+                ipconfig0=f"ip={vm.ip_address}/24,gw={vm.ip_gw}"
             )
 
             if vm.cores is not None:

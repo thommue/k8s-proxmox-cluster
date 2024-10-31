@@ -23,3 +23,12 @@ def update_upgrade_cmd(client: SSHClient, upgrade: bool, logger: Logger) -> None
     execute_command("sudo apt-get update", client, logger=logger)
     if upgrade:
         execute_command("sudo apt-get upgrade -y", client, logger=logger)
+
+
+def get_pwd(client: SSHClient, logger: Logger) -> str:
+    stdout_str, _ = execute_command(
+        cmd="pwd",
+        client=client,
+        logger=logger,
+    )
+    return stdout_str.split("\n")[0]
