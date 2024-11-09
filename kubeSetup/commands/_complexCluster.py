@@ -9,7 +9,10 @@ from .utils import (
     ProxmoxConnection,
     PreconfigureCluster,
     ClusterSetup,
-    ClusterType
+    ClusterType,
+    VmType,
+    setup_logger,
+    SSHConnectionPool
 )
 
 
@@ -28,38 +31,55 @@ from .utils import (
     callback=parse_complex_vm_config_file,
     help="Path to the configuration file for the vm setup for the kubernetes cluster.",
 )
+@click.option(
+    "--kube-version",
+    required=False,
+    type=click.STRING,
+    help="Kubernetes version, which will be used for the cluster setup.",
+)
 def complex_cluster_setup(
         proxmox_config: ProxmoxConnection,
         vm_haconfig: list[ComplexVmConf],
+        kube_version: str = "1.30"
 ) -> None:
     """
     Command, which sets up a complex HA kubernetes cluster, which can be seen in the image below.
     With the config, you can set the number of workers, cpu, ram and storage specs and the ip addresses.
-    Also you need here dedicated vms, which handles the control plane in HA mode.
+    Also, you need here dedicated vms, which handles the control plane in HA mode.
     """
-    click.echo(f"The config proxmox file {proxmox_config}")
-    click.echo(f"The config vm file {vm_haconfig}")
+    # setup logger
+    logger = setup_logger(name="ComplexClusterSetup")
 
-    # proxmox = ProxmoxCommands(proxmox_conf=proxmox_config)
-    # proxmox.clone_vm(vm_infos=vm_haconfig)
-    # proxmox.make_required_restarts(vm_infos=vm_haconfig)
+    # setup SSH connection pool manager
+    ssh_pool_manager = SSHConnectionPool()
+
+    proxmox = ProxmoxCommands(proxmox_conf=proxmox_config, logger=logger)
+    proxmox.clone_vm(vm_infos=vm_haconfig)
+    proxmox.make_required_restarts(vm_infos=vm_haconfig)
 
     # set up keepalived and haproxy for HA
-    keepalived = KeepaLivedSetup(vm_infos=vm_haconfig)
-    keepalived.configure_keepalived()
+    keepalived = KeepaLivedSetup(vm_infos=vm_haconfig, logger=logger)
+    ssh_pool_manager = keepalived.configure_keepalived(ssh_pool_manager=ssh_pool_manager)
 
-    haproxy = HAProxySetup(vm_infos=vm_haconfig)
-    haproxy.configure_haproxy()
+    haproxy = HAProxySetup(vm_infos=vm_haconfig, logger=logger)
+    ssh_pool_manager = haproxy.configure_haproxy(ssh_pool_manager=ssh_pool_manager)
 
     # preconfigure the cluster
-    preconf = PreconfigureCluster(vm_infos=vm_haconfig)
+    preconf = PreconfigureCluster(
+        vm_infos=vm_haconfig,
+        logger=logger,
+        kube_version=kube_version
+    )
     grouped_vms = preconf.preconfigure_vms()
 
     # set up the cluster in HA Mode with stacked ectd
-
-
+    ClusterSetup.setup_cluster(
+        group_vms=grouped_vms,
+        cluster_type=ClusterType.COMPLEX,
+        control_plane_endpoint=grouped_vms[VmType.LOADBALANCER.value][0].virtual_ip_address,
+        logger=logger
+    )
 
 
 if __name__ == "__main__":
     complex_cluster_setup()
-

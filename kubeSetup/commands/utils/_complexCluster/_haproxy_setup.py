@@ -2,32 +2,41 @@ import os
 import logging
 import paramiko
 from jinja2 import Environment, FileSystemLoader
-from kubeSetup.commands.utils import ComplexVmConf, VmType, setup_client, update_upgrade_cmd, execute_command, execute_commands, get_pwd
-
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("HAProxy Logger")
+from kubeSetup.commands.utils import (
+    ComplexVmConf,
+    VmType,
+    setup_client,
+    update_upgrade_cmd,
+    execute_command,
+    execute_commands,
+    get_pwd,
+    SSHConnectionPool
+)
 
 
 class HAProxySetup:
-    def __init__(self, vm_infos: list[ComplexVmConf]):
+    def __init__(self, vm_infos: list[ComplexVmConf], logger: logging.Logger):
         self.vm_infos = vm_infos
+        self.logger = logger
         
-    def configure_haproxy(self):
-        client = setup_client()
+    def configure_haproxy(self, ssh_pool_manager: SSHConnectionPool) -> SSHConnectionPool:
         
         for vm in self.vm_infos:
             if vm.vm_type == VmType.LOADBALANCER:
-                private_key = paramiko.RSAKey.from_private_key_file(vm.ssh_key)
-                client.connect(vm.ip_address, 22, vm.user, pkey=private_key)
+                # set up the connection and hold it, to avoid multiple open anc close issues
+                client_connection = ssh_pool_manager.get_connection(
+                    ip_address=vm.ip_address,
+                    user=vm.user,
+                    ssh_key=vm.ssh_key,
+                )
 
                 # update and upgrade the vm
-                update_upgrade_cmd(client=client, upgrade=True, logger=logger)
+                update_upgrade_cmd(client=client, upgrade=True, logger=self.logger)
 
                 # install haproxy
                 execute_command(
                     cmd="sudo apt install haproxy -y",
-                    logger=logger,
+                    logger=self.logger,
                     client=client
                 )
 
@@ -35,9 +44,9 @@ class HAProxySetup:
                 self._haproxy_setup(client=client)
 
     def _haproxy_setup(self, client: paramiko.SSHClient):
-        pwd = get_pwd(client=client, logger=logger)
+        pwd = get_pwd(client=client, logger=self.logger)
 
-        temp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
+        temp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_templates")
 
         sftp = client.open_sftp()
 
@@ -60,7 +69,7 @@ class HAProxySetup:
         execute_commands(
             cmds=cmds,
             client=client,
-            logger=logger,
+            logger=self.logger,
         )
 
     def _extract_master_ip_addresses(self) -> list[str]:

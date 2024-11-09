@@ -3,7 +3,6 @@ __all__ = [
     "ProxmoxCommands",
     "parse_simple_vm_config_file",
     "SimpleVmConf",
-    "SimpleKubernetesClusterSetup",
     "VmType",
     "parse_complex_vm_config_file",
     "ComplexVmConf",
@@ -18,7 +17,9 @@ __all__ = [
     "PreconfigureCluster",
     "ProxmoxConnection",
     "ClusterSetup",
-    "ClusterType"
+    "ClusterType",
+    "setup_logger",
+    "SSHConnectionPool"
 ]
 
 from ._setup import (
@@ -31,8 +32,7 @@ from ._setup import (
     NodeType
 )
 from ._proxmox import ProxmoxCommands
-from ._simpleCluster import SimpleKubernetesClusterSetup
-from ._setupUtils import execute_command, execute_commands, update_upgrade_cmd, setup_client, get_pwd, PreconfigureCluster
+from ._setupUtils import execute_command, execute_commands, update_upgrade_cmd, setup_client, get_pwd, PreconfigureCluster, setup_logger, SSHConnectionPool
 from ._complexCluster import KeepaLivedSetup, HAProxySetup
 from ._setup import ProxmoxConnection
 from ._clusterSetup import ClusterSetup, ClusterType

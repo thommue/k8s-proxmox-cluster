@@ -2,41 +2,58 @@ import os
 import logging
 import paramiko
 from jinja2 import Environment, FileSystemLoader
-from kubeSetup.commands.utils import ComplexVmConf, VmType, setup_client, update_upgrade_cmd, execute_command, execute_commands, NodeType, get_pwd
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("Keepalived Logger")
+from kubeSetup.commands.utils import (
+    ComplexVmConf,
+    VmType,
+    setup_client,
+    update_upgrade_cmd,
+    execute_command,
+    execute_commands,
+    NodeType,
+    get_pwd,
+    SSHConnectionPool
+)
 
 
 class KeepaLivedSetup:
-    def __init__(self, vm_infos: list[ComplexVmConf]):
+    def __init__(self, vm_infos: list[ComplexVmConf], logger: logging.Logger):
         self.vm_infos = vm_infos
+        self.logger = logger
 
-    def configure_keepalived(self):
-        client = setup_client()
+    def configure_keepalived(self, ssh_pool_manager: SSHConnectionPool) -> SSHConnectionPool:
 
         for vm in self.vm_infos:
             if vm.vm_type == VmType.LOADBALANCER:
-                private_key = paramiko.RSAKey.from_private_key_file(vm.ssh_key)
-                client.connect(vm.ip_address, 22, vm.user, pkey=private_key)
+                # set up the connection and hold it, to avoid multiple open anc close issues
+                client_connection = ssh_pool_manager.get_connection(
+                    ip_address=vm.ip_address,
+                    user=vm.user,
+                    ssh_key=vm.ssh_key,
+                )
 
                 # update and upgrade the vm
-                update_upgrade_cmd(client=client, upgrade=True, logger=logger)
+                update_upgrade_cmd(client=client_connection, upgrade=True, logger=self.logger)
 
                 # install keepalived
                 execute_command(
                     cmd="sudo apt install keepalived -y",
-                    client=client,
-                    logger=logger,
+                    client=client_connection,
+                    logger=self.logger,
                 )
 
                 # generate conf and transfer conf file
-                self._keepalived_setup(client=client, node_state=vm.node_state, virtual_ip=vm.virtual_ip_address)
+                self._keepalived_setup(
+                    client=client_connection,
+                    node_state=vm.node_state,
+                    virtual_ip=vm.virtual_ip_address
+                )
+
+                return ssh_pool_manager
 
     def _keepalived_setup(self, client: paramiko.SSHClient, node_state: NodeType, virtual_ip: str):
-        pwd = get_pwd(client=client, logger=logger)
+        pwd = get_pwd(client=client, logger=self.logger)
 
-        temp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
+        temp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_templates")
 
         sftp = client.open_sftp()
 
@@ -74,7 +91,7 @@ class KeepaLivedSetup:
         execute_commands(
             cmds=cmds,
             client=client,
-            logger=logger,
+            logger=self.logger,
         )
 
     @staticmethod

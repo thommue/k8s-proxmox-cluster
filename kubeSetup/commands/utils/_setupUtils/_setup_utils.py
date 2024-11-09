@@ -74,10 +74,10 @@ def configure_containerd(client: SSHClient, logger: Logger) -> None:
     execute_command("sudo systemctl restart containerd", client, logger)
 
 
-def install_kube_pkgs(client: SSHClient, logger: Logger) -> None:
+def install_kube_pkgs(client: SSHClient, logger: Logger, kube_version: str) -> None:
     preconf_cmds = [
-        "sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg",
-        "echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list",
+        f"sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v{kube_version}/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg",
+        f"echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{kube_version}/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list",
         "cat /etc/apt/sources.list.d/kubernetes.list"
     ]
     execute_commands(cmds=preconf_cmds, client=client, logger=logger)

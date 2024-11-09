@@ -5,12 +5,8 @@ from time import sleep, perf_counter
 from .._setup import SimpleVmConf, ComplexVmConf, ProxmoxConnection
 
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("Proxmox VM Setup")
-
-
 class ProxmoxCommands:
-    def __init__(self, proxmox_conf: ProxmoxConnection):
+    def __init__(self, proxmox_conf: ProxmoxConnection, logger: logging.Logger):
         self.proxmox = ProxmoxAPI(
             proxmox_conf.url,
             user=proxmox_conf.proxmox_user,
@@ -20,6 +16,7 @@ class ProxmoxCommands:
             timeout=20,
         )
         self.template_id = proxmox_conf.template_id
+        self.logger = logger
 
     def clone_vm(self, vm_infos: list[SimpleVmConf | ComplexVmConf]) -> None:
         for vm in vm_infos:
@@ -35,10 +32,13 @@ class ProxmoxCommands:
             )
 
             self.wait_for_task(
-                proxmox=self.proxmox, node=vm.target_name, task_id=clone_task
+                proxmox=self.proxmox,
+                node=vm.target_name,
+                task_id=clone_task,
+                logger=self.logger,
             )
 
-            logger.info(f"The config will be set for {vm.vm_id} - {vm.vm_name}")
+            self.logger.info(f"The config will be set for {vm.vm_id} - {vm.vm_name}")
             sleep(10)
 
             self.proxmox.nodes(vm.target_name).qemu(vm.vm_id).config.set(
@@ -55,73 +55,56 @@ class ProxmoxCommands:
                     size=vm.disk_size
                 )
 
-            logger.info(f"{vm.vm_id} - {vm.vm_name} will be started now")
+            self.logger.info(f"{vm.vm_id} - {vm.vm_name} will be started now")
             sleep(10)
 
             self.proxmox.nodes(vm.target_name).qemu(vm.vm_id).status.start.post()
 
             sleep(15)
-            logger.info(f"{vm.vm_id} - {vm.vm_name} is up and in starting progress\n")
+            self.logger.info(f"{vm.vm_id} - {vm.vm_name} is up and in starting progress\n")
 
     def make_required_restarts(self, vm_infos: list[SimpleVmConf | ComplexVmConf]):
         """
         Tries to SSH into the VM and checks if connection can be established.
         If the connection is established, it will be restarted the vm.
         """
-        sleep(125)
+        start_up_time = 120
+        for _ in range(8):
+            self.logger.info(f"Start uptime remaining {start_up_time}")
+            sleep(15)
+            start_up_time -= 15
+
+        self.logger.info(f"Start up finished\n")
+        sleep(5)
 
         for vm in vm_infos:
-            logger.info(f"{vm.vm_id} - {vm.vm_name} will be shutdown now...")
+            self.logger.info(f"{vm.vm_id} - {vm.vm_name} will be shutdown now...")
             self.proxmox.nodes(vm.target_name).qemu(vm.vm_id).status.post("shutdown")
 
+        self.logger.info(f"Shutdown finished\n")
         sleep(25)
 
         for vm in vm_infos:
-            logger.info(f"{vm.vm_id} - {vm.vm_name} starting up again...")
+            self.logger.info(f"{vm.vm_id} - {vm.vm_name} starting up again...")
             self.proxmox.nodes(vm.target_name).qemu(vm.vm_id).status.post("start")
 
-        logger.info(f"Waiting time for restarting the VMs (takes about 2 minutes...)")
-        sleep(150)
+        restart_time = 150
+        self.logger.info(f"Restarting\n")
+        for _ in range(10):
+            self.logger.info(f"Waiting time for restarting the VMs -- {restart_time} seconds left")
+            sleep(15)
+            restart_time -= 15
 
-
-
-        # print("test")
-        # self.proxmox.nodes(vm_infos[0].target_name).qemu(vm_infos[0].vm_id).status.post("start")
-        # print("test2")
-
-        # client = paramiko.SSHClient()
-        # client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        #
-        # for vm in vm_infos:
-        #     while True:
-        #         try:
-        #             private_key = paramiko.RSAKey.from_private_key_file(vm.ssh_key)
-        #             client.connect(hostname=vm.ip_address.split("/")[0], port=22, username=vm.user, pkey=private_key)
-        #             logger.info(f"SSHing into VM {vm.vm_id} - {vm.vm_name}. VM is ready!")
-        #             logger.info(f"{vm.vm_id} - {vm.vm_name} will be started now...")
-        #
-        #             # Open an SSH session and run the reboot command
-        #             stdin, stdout, stderr = client.exec_command("sudo reboot")
-        #
-        #             # This waits for the command to complete
-        #             stdout.channel.recv_exit_status()
-        #             sleep(15)
-        #             return True
-        #
-        #         except paramiko.ssh_exception.NoValidConnectionsError:
-        #             logger.info(f"{vm.vm_id} - {vm.vm_name} not ready yet!")
-        #             sleep(10)
-        #
-        #         finally:
-        #             client.close()
+        self.logger.info(f"Restarting finished\n")
 
     @staticmethod
     def wait_for_task(
-        proxmox: ProxmoxAPI,
-        node: str,
-        task_id: Any,
-        timeout: int = 300,
-        interval: int = 10,
+            proxmox: ProxmoxAPI,
+            node: str,
+            task_id: Any,
+            logger: logging.Logger,
+            timeout: int = 300,
+            interval: int = 10,
     ) -> None:
         sleep(2)
         start_time = perf_counter()

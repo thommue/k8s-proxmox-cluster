@@ -1,30 +1,37 @@
 import os
 import logging
-import paramiko
 from time import sleep
+from typing import Optional
 from ._schemas import ClusterType
-from paramiko.client import SSHClient
 from jinja2 import Environment, FileSystemLoader
 from .._setup import SimpleVmConf, ComplexVmConf, VmType
-from .._setupUtils import setup_client, get_pwd, kubeadm_init, setup_calico
-
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("KubeSetup Logger")
+from .._setupUtils import get_pwd, kubeadm_init, setup_calico, SSHConnectionPool
 
 
 class ClusterSetup:
 
     @classmethod
-    def setup_cluster(cls, group_vms: dict[str, list[SimpleVmConf | ComplexVmConf]], cluster_type: ClusterType):
-        # configure ssh connection to main master vm
-        client = setup_client(group_vms=group_vms)
+    def setup_cluster(
+            cls,
+            group_vms: dict[str, list[SimpleVmConf | ComplexVmConf]],
+            cluster_type: ClusterType,
+            logger: logging.Logger,
+            ssh_pool_manager: SSHConnectionPool,
+            control_plane_endpoint: Optional[str] = None
+    ):
+        # get the connection to the master node
+        master_vm = group_vms[VmType.MASTER.name][0]
+        client_master = ssh_pool_manager.get_connection(
+            ip_address=master_vm.ip_address,
+            user=master_vm.user,
+            ssh_key=master_vm.ssh_key
+        )
 
         # get the root directory from the vm, just to move the files there
-        pwd = get_pwd(client=client, logger=logger)
+        pwd = get_pwd(client=client_master, logger=logger)
 
         # establish sftp
-        sftp = client.open_sftp()
+        sftp = client_master.open_sftp()
 
         # get the right templates
         if cluster_type == ClusterType.SIMPLE:
@@ -51,7 +58,7 @@ class ClusterSetup:
                         ip_address=group_vms[VmType.MASTER.name][0].ip_address,
                         pod_subnet="10.244.0.0",
                         service_subnet="10.96.0.0",
-                        control_plane_endpoint="",
+                        control_plane_endpoint=control_plane_endpoint,
                         temp_path=temp_path
                     )
                 )
@@ -69,24 +76,43 @@ class ClusterSetup:
         sftp.close()
 
         # init kubeadm and setup kube home
-        kubeadm_cmd = kubeadm_init(client=client, logger=logger)
+        kubeadm_cmd = kubeadm_init(client=client_master, logger=logger)
 
         # init calico (cni)
-        setup_calico(client=client, logger=logger)
+        setup_calico(client=client_master, logger=logger)
 
         # join the worker nodes
-        cls._join_worker_nodes(vm_infos_grouped=group_vms, client=client, kubeadm_cmd=kubeadm_cmd)
+        cls._join_worker_nodes(
+            vm_infos_grouped=group_vms,
+            ssh_pool_manager=ssh_pool_manager,
+            kubeadm_cmd=kubeadm_cmd,
+            logger=logger
+        )
 
     @staticmethod
     def setup_kubeadm_conf(
-            ip_address: str, pod_subnet: str, service_subnet: str, temp_path: str
+            ip_address: str,
+            pod_subnet: str,
+            service_subnet: str,
+            temp_path: str,
+            control_plane_endpoint: Optional[str] = None
     ) -> str:
         template = Environment(loader=FileSystemLoader(temp_path)).get_template(
             "kubeadm-config.j2"
         )
-        return template.render(
-            ip_address=ip_address, pod_subnet=pod_subnet, service_subnet=service_subnet
-        )
+        if control_plane_endpoint:
+            return template.render(
+                ip_address=ip_address,
+                pod_subnet=pod_subnet,
+                service_subnet=service_subnet,
+                control_plane_endpoint=control_plane_endpoint
+            )
+        else:
+            return template.render(
+                ip_address=ip_address,
+                pod_subnet=pod_subnet,
+                service_subnet=service_subnet
+            )
 
     @staticmethod
     def setup_calico(pod_subnet: str, temp_path: str) -> str:
@@ -96,13 +122,20 @@ class ClusterSetup:
         return template.render(pod_subnet=pod_subnet)
 
     @staticmethod
-    def _join_worker_nodes(vm_infos_grouped: dict[str, list[SimpleVmConf]], kubeadm_cmd: str, client: SSHClient) -> None:
+    def _join_worker_nodes(
+            vm_infos_grouped: dict[str, list[SimpleVmConf]],
+            kubeadm_cmd: str,
+            ssh_pool_manager: SSHConnectionPool,
+            logger: logging.Logger
+    ) -> None:
 
         for worker in vm_infos_grouped[VmType.WORKER.name]:
+            client_worker = ssh_pool_manager.get_connection(
+                ip_address=worker.ip_address,
+                user=worker.user,
+                ssh_key=worker.ssh_key
+            )
 
-            private_key = paramiko.RSAKey.from_private_key_file(worker.ssh_key)
-            client.connect(worker.ip_address, 22, worker.user, pkey=private_key)
-
-            stdin, stdout, stderr = client.exec_command(kubeadm_cmd)
+            stdin, stdout, stderr = client_worker.exec_command(kubeadm_cmd)
             logger.info(f"Connect Worker {worker.ip_address}: {stdout.read().decode()} | {stderr.read().decode()}")
             sleep(20)
