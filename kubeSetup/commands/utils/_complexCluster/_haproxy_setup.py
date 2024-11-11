@@ -31,17 +31,19 @@ class HAProxySetup:
                 )
 
                 # update and upgrade the vm
-                update_upgrade_cmd(client=client, upgrade=True, logger=self.logger)
+                update_upgrade_cmd(client=client_connection, upgrade=True, logger=self.logger)
 
                 # install haproxy
                 execute_command(
                     cmd="sudo apt install haproxy -y",
                     logger=self.logger,
-                    client=client
+                    client=client_connection
                 )
 
                 # generate the conf and transfer the file
-                self._haproxy_setup(client=client)
+                self._haproxy_setup(client=client_connection)
+
+        return ssh_pool_manager
 
     def _haproxy_setup(self, client: paramiko.SSHClient):
         pwd = get_pwd(client=client, logger=self.logger)

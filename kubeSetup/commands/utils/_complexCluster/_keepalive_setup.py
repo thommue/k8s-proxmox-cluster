@@ -48,7 +48,7 @@ class KeepaLivedSetup:
                     virtual_ip=vm.virtual_ip_address
                 )
 
-                return ssh_pool_manager
+        return ssh_pool_manager
 
     def _keepalived_setup(self, client: paramiko.SSHClient, node_state: NodeType, virtual_ip: str):
         pwd = get_pwd(client=client, logger=self.logger)

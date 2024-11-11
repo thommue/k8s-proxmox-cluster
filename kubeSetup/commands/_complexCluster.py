@@ -35,6 +35,7 @@ from .utils import (
     "--kube-version",
     required=False,
     type=click.STRING,
+    default="1.30",
     help="Kubernetes version, which will be used for the cluster setup.",
 )
 def complex_cluster_setup(
@@ -64,21 +65,32 @@ def complex_cluster_setup(
     haproxy = HAProxySetup(vm_infos=vm_haconfig, logger=logger)
     ssh_pool_manager = haproxy.configure_haproxy(ssh_pool_manager=ssh_pool_manager)
 
+    # close connections to load balancer
+    ssh_pool_manager.close_connections(
+        ip_addresses=[vm.ip_address for vm in vm_haconfig if vm.vm_type == VmType.LOADBALANCER]
+    )
+
     # preconfigure the cluster
     preconf = PreconfigureCluster(
         vm_infos=vm_haconfig,
         logger=logger,
         kube_version=kube_version
     )
-    grouped_vms = preconf.preconfigure_vms()
+    grouped_vms, ssh_pool_manager = preconf.preconfigure_vms(
+        ssh_pool_manager=ssh_pool_manager
+    )
 
     # set up the cluster in HA Mode with stacked ectd
     ClusterSetup.setup_cluster(
         group_vms=grouped_vms,
         cluster_type=ClusterType.COMPLEX,
         control_plane_endpoint=grouped_vms[VmType.LOADBALANCER.value][0].virtual_ip_address,
-        logger=logger
+        logger=logger,
+        ssh_pool_manager=ssh_pool_manager
     )
+
+    # close all connections
+    ssh_pool_manager.close_all_connections()
 
 
 if __name__ == "__main__":
