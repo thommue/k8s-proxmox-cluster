@@ -124,7 +124,7 @@ class ClusterSetup:
     @staticmethod
     def _join_worker_nodes(
             vm_infos_grouped: dict[str, list[SimpleVmConf]],
-            kubeadm_cmd: str,
+            kubeadm_cmd: list[str],
             ssh_pool_manager: SSHConnectionPool,
             logger: logging.Logger
     ) -> None:
@@ -136,6 +136,6 @@ class ClusterSetup:
                 ssh_key=worker.ssh_key
             )
 
-            stdin, stdout, stderr = client_worker.exec_command(kubeadm_cmd)
+            stdin, stdout, stderr = client_worker.exec_command(kubeadm_cmd[-1])
             logger.info(f"Connect Worker {worker.ip_address}: {stdout.read().decode()} | {stderr.read().decode()}")
             sleep(20)

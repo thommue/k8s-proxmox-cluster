@@ -29,6 +29,8 @@ class PreconfigureCluster:
             if isinstance(vm, ComplexVmConf) and vm.vm_type == VmType.LOADBALANCER:
                 continue
 
+            self.logger.warning(f"\n\nSetup vm {vm.vm_name} with ip: {vm.ip_address}\n\n")
+
             # set up the connection and hold it, to avoid multiple open anc close issues
             client_connection = ssh_pool_manager.get_connection(
                 ip_address=vm.ip_address,

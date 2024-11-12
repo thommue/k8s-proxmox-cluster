@@ -92,14 +92,19 @@ def install_kube_pkgs(client: SSHClient, logger: Logger, kube_version: str) -> N
     sleep(15)
 
 
-def kubeadm_init(client: SSHClient, logger: Logger) -> str:
+def kubeadm_init(client: SSHClient, logger: Logger, complex_type: bool = False) -> list[str]:
     """Initialize Kubernetes master node using kubeadm."""
     _, stdout, _ = client.exec_command("sudo kubeadm init --config=kubeadm-config.yaml")
     kubeadm_lines = stdout.readlines()
     logger.info(f"kubeadm init output: {''.join(kubeadm_lines)}")
 
+    cmds = []
+
+    if complex_type:
+        cmds.append(f"sudo {kubeadm_lines[-8].split('\\')[0].strip()} {kubeadm_lines[-7].split('\\')[0].strip()} {kubeadm_lines[-6].strip()}")
+
     # Extract kubeadm join command
-    kubeadm_cmd = f"sudo {kubeadm_lines[-2].split('\\')[0]}{kubeadm_lines[-1].strip()}"
+    cmds.append(f"sudo {kubeadm_lines[-2].split('\\')[0]}{kubeadm_lines[-1].strip()}")
 
     # Set up kube home config
     kube_home_cmds = [
@@ -109,7 +114,7 @@ def kubeadm_init(client: SSHClient, logger: Logger) -> str:
     ]
     execute_commands(kube_home_cmds, client, logger)
 
-    return kubeadm_cmd
+    return cmds
 
 
 def setup_calico(client: SSHClient, logger: Logger) -> None:
