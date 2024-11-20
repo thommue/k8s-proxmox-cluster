@@ -1,5 +1,7 @@
+import click
 import paramiko
 import threading
+from typing import Optional
 
 
 class SSHConnectionPool:
@@ -18,10 +20,17 @@ class SSHConnectionPool:
         client.connect(ip_address, 22, user, pkey=private_key)
         return client
 
-    def get_connection(self, ip_address: str, user: str, ssh_key: str) -> paramiko.SSHClient:
+    def get_connection(
+            self,
+            ip_address: str,
+            user: Optional[str] = None,
+            ssh_key: Optional[str] = None
+    ) -> paramiko.SSHClient:
         """Gets an existing connection or creates a new one if not available."""
         with self.lock:
             if ip_address not in self.connections:
+                if not user and not ssh_key:
+                    raise Exception("SSH connection failed! USER and SSH KEY are required!")
                 self.connections[ip_address] = self.create_connection(ip_address, user, ssh_key)
             return self.connections[ip_address]
 

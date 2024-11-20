@@ -13,37 +13,52 @@
 #
 # print(sorted(test_list))
 
-with open("test.txt", "r") as f:
-    # content = f.read()
-    lines = f.readlines()
+# with open("test.txt", "r") as f:
+#     # content = f.read()
+#     lines = f.readlines()
+#
+# # print(content)
+#
+#
+# print()
+# print(lines)
+# print(lines[-8].split('\\')[0].strip())
+# print(lines[-7].split('\\')[0].strip())
+# print(lines[-6].strip())
+# print()
+# print(lines[-2].split('\\')[0])
+# print(lines[-1].strip())
+#
+#
+# together_master = f"sudo {lines[-8].split('\\')[0].strip()} {lines[-7].split('\\')[0].strip()} {lines[-6].strip()}"
+# together_worker = f"sudo {lines[-2].split('\\')[0].strip()} {lines[-1].strip()}"
+#
+# print(together_master)
+# print(together_worker)
+#
+# start_index = next((i for i, line in enumerate(lines) if "kubeadm" in line), None)
+# print(start_index)
+#
+#
+# together_master = f"sudo {lines[start_index].split('\\')[0].strip()} {lines[start_index + 1].split('\\')[0].strip()} {lines[start_index + 2].strip()}"
+# together_worker = f"sudo {lines[start_index + 6].split('\\')[0].strip()} {lines[start_index + 7].strip()}"
+#
+# print(together_master)
+# print(together_worker)
 
-# print(content)
+settings = ["registry.k8s.io/pause:3.8", "SystemdCgroup = false"]
 
+with open("config.toml", "r") as toml:
+    content = toml.readlines()
 
-print()
-print(lines)
-print(lines[-8].split('\\')[0].strip())
-print(lines[-7].split('\\')[0].strip())
-print(lines[-6].strip())
-print()
-print(lines[-2].split('\\')[0])
-print(lines[-1].strip())
+print(content)
 
-
-together_master = f"sudo {lines[-8].split('\\')[0].strip()} {lines[-7].split('\\')[0].strip()} {lines[-6].strip()}"
-together_worker = f"sudo {lines[-2].split('\\')[0].strip()} {lines[-1].strip()}"
-
-print(together_master)
-print(together_worker)
-
-start_index = next((i for i, line in enumerate(lines) if "kubeadm" in line), None)
-print(start_index)
-
-
-together_master = f"sudo {lines[start_index].split('\\')[0].strip()} {lines[start_index + 1].split('\\')[0].strip()} {lines[start_index + 2].strip()}"
-together_worker = f"sudo {lines[start_index + 6].split('\\')[0].strip()} {lines[start_index + 7].strip()}"
-
-print(together_master)
-print(together_worker)
-
-
+for line in content:
+    # print(line)
+    matched_setting = next((setting for setting in settings if setting in line), None)
+    if matched_setting:
+        print("--------------")
+        print(f"Line: {line}")
+        print(f"Matched Setting: {matched_setting}")
+        print(line.replace("SystemdCgroup = false", "SystemdCgroup = true"))
+        print("--------------")

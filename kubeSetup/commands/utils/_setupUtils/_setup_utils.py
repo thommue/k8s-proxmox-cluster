@@ -1,22 +1,26 @@
 from time import sleep
 from logging import Logger
+from typing import Optional
 from paramiko.client import SSHClient
 from ._general_commands import execute_command, execute_commands, update_upgrade_cmd
 
 
-def _modify_file(client: SSHClient, file_path: str, settings: list[str], uncomment: bool, logger: Logger, replace: str = "") -> None:
+def _modify_file(client: SSHClient, file_path: str, settings: list[str], uncomment: bool) -> None:
     """Modify specified settings in a file."""
     _, stdout, _ = client.exec_command(f"sudo cat {file_path}")
     file_contents = stdout.readlines()
 
     new_lines = []
     for line in file_contents:
-        stripped_line = line.strip()
-        if any(setting in stripped_line for setting in settings):
+        matched_setting = next((setting for setting in settings if setting in line), None)
+        if matched_setting:
             if uncomment:
-                new_lines.append(stripped_line.lstrip("#").strip() + "\n")
+                new_lines.append(line.lstrip("#").strip() + "\n")
             else:
-                new_lines.append(replace + "\n")
+                if "pause:3.8" in matched_setting:
+                    new_lines.append(line.replace("3.8", "3.9"))
+                else:
+                    new_lines.append(line.replace("false", "true"))
         else:
             new_lines.append(line)
 
@@ -33,8 +37,7 @@ def conf_sysctl(client: SSHClient, logger: Logger) -> None:
         client=client,
         file_path="/etc/sysctl.conf",
         settings=settings,
-        uncomment=True,
-        logger=logger
+        uncomment=True
     )
     execute_command("sudo sysctl -p", client, logger)
 
@@ -66,10 +69,8 @@ def configure_containerd(client: SSHClient, logger: Logger) -> None:
     _modify_file(
         client=client,
         file_path="/etc/containerd/config.toml",
-        settings=["SystemdCgroup = false"],
-        uncomment=False,
-        logger=logger,
-        replace="SystemdCgroup = true"
+        settings=["registry.k8s.io/pause:3.8", "SystemdCgroup = false"],
+        uncomment=False
     )
     execute_command("sudo systemctl restart containerd", client, logger)
 
@@ -92,19 +93,19 @@ def install_kube_pkgs(client: SSHClient, logger: Logger, kube_version: str) -> N
     sleep(15)
 
 
-def kubeadm_init(client: SSHClient, logger: Logger, complex_type: bool = False) -> list[str]:
+def kubeadm_init(client: SSHClient, logger: Logger, complex_type: bool) -> tuple[Optional[str], str]:
     """Initialize Kubernetes master node using kubeadm."""
     _, stdout, _ = client.exec_command("sudo kubeadm init --config=kubeadm-config.yaml")
     kubeadm_lines = stdout.readlines()
     logger.info(f"kubeadm init output: {''.join(kubeadm_lines)}")
 
-    cmds = []
+    # Extract kubeadm join command for worker and master
+    worker_join_cmd = f"sudo {kubeadm_lines[-2].split('\\')[0]}{kubeadm_lines[-1].strip()}"
 
     if complex_type:
-        cmds.append(f"sudo {kubeadm_lines[-8].split('\\')[0].strip()} {kubeadm_lines[-7].split('\\')[0].strip()} {kubeadm_lines[-6].strip()}")
-
-    # Extract kubeadm join command
-    cmds.append(f"sudo {kubeadm_lines[-2].split('\\')[0]}{kubeadm_lines[-1].strip()}")
+        master_join_cmd = f"sudo {kubeadm_lines[-8].split('\\')[0].strip()} {kubeadm_lines[-7].split('\\')[0].strip()} {kubeadm_lines[-6].strip()}"
+    else:
+        master_join_cmd = None
 
     # Set up kube home config
     kube_home_cmds = [
@@ -114,7 +115,7 @@ def kubeadm_init(client: SSHClient, logger: Logger, complex_type: bool = False) 
     ]
     execute_commands(kube_home_cmds, client, logger)
 
-    return cmds
+    return master_join_cmd, worker_join_cmd
 
 
 def setup_calico(client: SSHClient, logger: Logger) -> None:

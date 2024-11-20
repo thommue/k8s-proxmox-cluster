@@ -48,6 +48,13 @@ class PreconfigureCluster:
                 logger=self.logger,
             )
 
+            # install sshpass for simple ssh password
+            execute_command(
+                cmd="sudo apt-get install sshpass -y",
+                client=client_connection,
+                logger=self.logger,
+            )
+
             # config sysctl
             conf_sysctl(client=client_connection, logger=self.logger)
 
