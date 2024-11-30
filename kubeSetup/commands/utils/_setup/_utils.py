@@ -19,6 +19,7 @@ def _converter(conf: Any, simple: bool) -> SimpleVmConf | ComplexVmConf:
                 disk_size=conf["disk_size"] if "disk_size" in conf.keys() else None,
                 user=conf["user"],
                 ssh_key=conf["ssh_key"],
+                pw=conf["pwd"],
             )
         else:
             configuration = ComplexVmConf(
@@ -34,6 +35,7 @@ def _converter(conf: Any, simple: bool) -> SimpleVmConf | ComplexVmConf:
                 disk_size=conf["disk_size"] if "disk_size" in conf.keys() else None,
                 user=conf["user"],
                 ssh_key=conf["ssh_key"],
+                pw=conf["pwd"],
                 virtual_ip_address=conf["virtual_ip_address"] if VmType(conf["vm_type"].upper()) == VmType.LOADBALANCER else None,
                 node_state=NodeType(conf["node_state"].upper()) if "node_state" in conf.keys() and (NodeType(conf["node_state"].upper()) == NodeType.MASTER or NodeType(conf["node_state"].upper()) == NodeType.BACKUP) else None,
             )

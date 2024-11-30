@@ -25,6 +25,7 @@ class SimpleVmConf:
     ip_gw: str
     user: str
     ssh_key: str
+    pw: str
     cores: Optional[int] = None
     memory: Optional[int] = None
     disk_size: Optional[int] = None

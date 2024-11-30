@@ -1,4 +1,3 @@
-import click
 import paramiko
 import threading
 from typing import Optional

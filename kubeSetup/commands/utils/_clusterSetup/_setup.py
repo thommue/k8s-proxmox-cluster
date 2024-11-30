@@ -157,9 +157,8 @@ class ClusterSetup:
             # get the root location
             client_pwd = get_pwd(client=client_con, logger=logger)
             # copy the certs
-            # TODO insert pw into config!!
             execute_command(
-                cmd=f'sudo sshpass -p "pwd" scp -o StrictHostKeyChecking=no -r {certs_dir} {master_vm.user}@{master_vm.ip_address}:{client_pwd}',
+                cmd=f'sudo sshpass -p "{master_vm.pw}" scp -o StrictHostKeyChecking=no -r {certs_dir} {master_vm.user}@{master_vm.ip_address}:{client_pwd}',
                 client=init_master_client,
                 logger=logger
             )

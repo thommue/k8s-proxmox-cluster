@@ -5,7 +5,6 @@ from jinja2 import Environment, FileSystemLoader
 from kubeSetup.commands.utils import (
     ComplexVmConf,
     VmType,
-    setup_client,
     update_upgrade_cmd,
     execute_command,
     execute_commands,

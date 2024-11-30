@@ -9,8 +9,7 @@ def parse_complex_vm_config_file(_: Any, param: click.Parameter, value: str) -> 
     if value.endswith(".json"):
         with open(value, "r") as file:
             conf_dict = json.load(file)
-            # TODO CHANGE BACK TO 5!
-            if len(conf_dict) > 1:
+            if len(conf_dict) > 5:
                 result: list[ComplexVmConf] = [_converter(conf, simple=False) for conf in conf_dict]
                 return result
             else:
