@@ -11,6 +11,7 @@ def _converter(conf: Any, simple: bool) -> SimpleVmConf | ComplexVmConf:
                 vm_type=VmType(conf["vm_type"].upper()),
                 target_name=conf["target_name"],
                 vm_id=conf["vm_id"],
+                tags=conf["tags"],
                 clone_type=conf["clone_type"],
                 ip_address=conf["ip_address"],
                 ip_gw=conf["ip_gw"],
@@ -19,7 +20,7 @@ def _converter(conf: Any, simple: bool) -> SimpleVmConf | ComplexVmConf:
                 disk_size=conf["disk_size"] if "disk_size" in conf.keys() else None,
                 user=conf["user"],
                 ssh_key=conf["ssh_key"],
-                pw=conf["pwd"],
+                pw=conf["pw"],
             )
         else:
             configuration = ComplexVmConf(
@@ -27,6 +28,7 @@ def _converter(conf: Any, simple: bool) -> SimpleVmConf | ComplexVmConf:
                 vm_type=VmType(conf["vm_type"].upper()),
                 target_name=conf["target_name"],
                 vm_id=conf["vm_id"],
+                tags=conf["tags"],
                 clone_type=conf["clone_type"],
                 ip_address=conf["ip_address"],
                 ip_gw=conf["ip_gw"],
@@ -35,7 +37,7 @@ def _converter(conf: Any, simple: bool) -> SimpleVmConf | ComplexVmConf:
                 disk_size=conf["disk_size"] if "disk_size" in conf.keys() else None,
                 user=conf["user"],
                 ssh_key=conf["ssh_key"],
-                pw=conf["pwd"],
+                pw=conf["pw"],
                 virtual_ip_address=conf["virtual_ip_address"] if VmType(conf["vm_type"].upper()) == VmType.LOADBALANCER else None,
                 node_state=NodeType(conf["node_state"].upper()) if "node_state" in conf.keys() and (NodeType(conf["node_state"].upper()) == NodeType.MASTER or NodeType(conf["node_state"].upper()) == NodeType.BACKUP) else None,
             )
@@ -61,6 +63,6 @@ def _converter(conf: Any, simple: bool) -> SimpleVmConf | ComplexVmConf:
     except KeyError as err:
         raise click.UsageError(
             "Please provide a valid configuration file."
-            "The requirements can be found in the documentation and on the example of the corresponding"
+            "The requirements can be found in the documentation and on the example of the corresponding "
             "github page"
         )

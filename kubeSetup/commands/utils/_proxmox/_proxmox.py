@@ -1,4 +1,5 @@
 import logging
+from tqdm import tqdm
 from typing import Any
 from proxmoxer import ProxmoxAPI  # type: ignore
 from time import sleep, perf_counter
@@ -27,7 +28,7 @@ class ProxmoxCommands:
                     newid=vm.vm_id,
                     name=vm.vm_name,
                     target=vm.target_name,
-                    full=vm.clone_type,
+                    full=vm.clone_type
                 )
             )
 
@@ -38,12 +39,17 @@ class ProxmoxCommands:
                 logger=self.logger,
             )
 
-            self.logger.info(f"The config will be set for {vm.vm_id} - {vm.vm_name}")
-            sleep(10)
+            self._prg_bar(
+                sleep_time=10,
+                desc=f"The config will be set for {vm.vm_id} - {vm.vm_name}\n",
+                logger=self.logger
+            )
 
             self.proxmox.nodes(vm.target_name).qemu(vm.vm_id).config.set(
                 ipconfig0=f"ip={vm.ip_address}/24,gw={vm.ip_gw}"
             )
+
+            self.proxmox.nodes(vm.target_name).qemu(vm.vm_id).config.post(tags=vm.tags)
 
             if vm.cores is not None:
                 self.proxmox.nodes(vm.target_name).qemu(vm.vm_id).config.set(
@@ -54,60 +60,65 @@ class ProxmoxCommands:
                 self.proxmox.nodes(vm.target_name).qemu(vm.vm_id).resize.post(
                     size=vm.disk_size
                 )
-
-            self.logger.info(f"{vm.vm_id} - {vm.vm_name} will be started now")
-            sleep(10)
-
+            sleep(5)
             self.proxmox.nodes(vm.target_name).qemu(vm.vm_id).status.start.post()
-
-            sleep(15)
-            self.logger.info(f"{vm.vm_id} - {vm.vm_name} is up and in starting progress\n")
+            self._prg_bar(
+                sleep_time=15,
+                desc=f"Starting up {vm.vm_id} - {vm.vm_name}\n",
+                logger=self.logger
+            )
 
     def make_required_restarts(self, vm_infos: list[SimpleVmConf | ComplexVmConf]) -> None:
         """
         Tries to SSH into the VM and checks if connection can be established.
         If the connection is established, it will be restarted the vm.
         """
-        start_up_time = 120
-        for _ in range(8):
-            self.logger.info(f"Start uptime remaining {start_up_time}")
-            sleep(15)
-            start_up_time -= 15
-
-        self.logger.info(f"Start up finished\n")
-        sleep(5)
+        self._prg_bar(
+            sleep_time=125,
+            desc="Initial start up\n",
+            logger=self.logger
+        )
 
         for vm in vm_infos:
             self.logger.info(f"{vm.vm_id} - {vm.vm_name} will be shutdown now...")
             self.proxmox.nodes(vm.target_name).qemu(vm.vm_id).status.post("shutdown")
 
-        self.logger.info(f"Shutdown finished\n")
-        sleep(25)
+        self._prg_bar(
+            sleep_time=25,
+            desc="Waiting for the shutdown to finish\n",
+            logger=self.logger
+        )
 
         for vm in vm_infos:
             self.logger.info(f"{vm.vm_id} - {vm.vm_name} starting up again...")
             self.proxmox.nodes(vm.target_name).qemu(vm.vm_id).status.post("start")
 
-        restart_time = 150
-        self.logger.info(f"Restarting\n")
-        for _ in range(10):
-            self.logger.info(f"Waiting time for restarting the VMs -- {restart_time} seconds left")
-            sleep(15)
-            restart_time -= 15
+        self.logger.info(f"Restarting all vms\n")
 
-        self.logger.info(f"Restarting finished.\n")
+        self._prg_bar(
+            sleep_time=150,
+            desc="Waiting for the restart task to finish\n",
+            logger=self.logger
+        )
 
     def cleanup_vm(self, vm_infos: list[VmConf]) -> None:
         for vm in vm_infos:
             self.logger.info(f"{vm.vm_id} - {vm.vm_name} will be shutdown now...")
             self.proxmox.nodes(vm.target_name).qemu(vm.vm_id).status.post("shutdown")
-        self.logger.info(f"Shutdown finished\n")
-        sleep(20)
+        self._prg_bar(
+            sleep_time=25,
+            desc="Waiting for the shutdown to finish\n",
+            logger=self.logger
+        )
 
         for vm in vm_infos:
             self.logger.info(f"{vm.vm_id} - {vm.vm_name} will be removed now...")
             self.proxmox.nodes(vm.target_name).qemu(vm.vm_id).delete()
-        sleep(10)
+        self._prg_bar(
+            sleep_time=10,
+            desc="Waiting for the delete task to finish\n",
+            logger=self.logger
+        )
 
         self.logger.info(f"Cleanup completed.\n")
 
@@ -136,3 +147,11 @@ class ProxmoxCommands:
             logger.info(f"Task {task_id} in progress.")
             sleep(interval)
         raise TimeoutError(f"Task {task_id} did not complete in {timeout} seconds!")
+
+    @staticmethod
+    def _prg_bar(sleep_time: int, desc: str, logger: logging.Logger) -> None:
+        logger.info(desc)
+        sleep(1)
+        for _ in tqdm(range(sleep_time - 1), colour="green"):
+            sleep(1)
+        logger.info("\n")

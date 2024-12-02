@@ -27,6 +27,7 @@ class SimpleVmConf:
     vm_type: VmType
     target_name: str
     vm_id: int
+    tags: str
     clone_type: int
     ip_address: str
     ip_gw: str

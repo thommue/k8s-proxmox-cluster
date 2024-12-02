@@ -46,19 +46,22 @@
 # print(together_master)
 # print(together_worker)
 
-settings = ["registry.k8s.io/pause:3.8", "SystemdCgroup = false"]
+# settings = ["registry.k8s.io/pause:3.8", "SystemdCgroup = false"]
+#
+# with open("config.toml", "r") as toml:
+#     content = toml.readlines()
+#
+# print(content)
+#
+# for line in content:
+#     # print(line)
+#     matched_setting = next((setting for setting in settings if setting in line), None)
+#     if matched_setting:
+#         print("--------------")
+#         print(f"Line: {line}")
+#         print(f"Matched Setting: {matched_setting}")
+#         print(line.replace("SystemdCgroup = false", "SystemdCgroup = true"))
+#         print("--------------")
 
-with open("config.toml", "r") as toml:
-    content = toml.readlines()
-
-print(content)
-
-for line in content:
-    # print(line)
-    matched_setting = next((setting for setting in settings if setting in line), None)
-    if matched_setting:
-        print("--------------")
-        print(f"Line: {line}")
-        print(f"Matched Setting: {matched_setting}")
-        print(line.replace("SystemdCgroup = false", "SystemdCgroup = true"))
-        print("--------------")
+for i in range(10):
+    print(i)
