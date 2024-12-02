@@ -2,7 +2,7 @@ import logging
 from typing import Any
 from proxmoxer import ProxmoxAPI  # type: ignore
 from time import sleep, perf_counter
-from .._setup import SimpleVmConf, ComplexVmConf, ProxmoxConnection
+from .._setup import SimpleVmConf, ComplexVmConf, ProxmoxConnection, VmConf
 
 
 class ProxmoxCommands:
@@ -63,7 +63,7 @@ class ProxmoxCommands:
             sleep(15)
             self.logger.info(f"{vm.vm_id} - {vm.vm_name} is up and in starting progress\n")
 
-    def make_required_restarts(self, vm_infos: list[SimpleVmConf | ComplexVmConf]):
+    def make_required_restarts(self, vm_infos: list[SimpleVmConf | ComplexVmConf]) -> None:
         """
         Tries to SSH into the VM and checks if connection can be established.
         If the connection is established, it will be restarted the vm.
@@ -95,7 +95,21 @@ class ProxmoxCommands:
             sleep(15)
             restart_time -= 15
 
-        self.logger.info(f"Restarting finished\n")
+        self.logger.info(f"Restarting finished.\n")
+
+    def cleanup_vm(self, vm_infos: list[VmConf]) -> None:
+        for vm in vm_infos:
+            self.logger.info(f"{vm.vm_id} - {vm.vm_name} will be shutdown now...")
+            self.proxmox.nodes(vm.target_name).qemu(vm.vm_id).status.post("shutdown")
+        self.logger.info(f"Shutdown finished\n")
+        sleep(20)
+
+        for vm in vm_infos:
+            self.logger.info(f"{vm.vm_id} - {vm.vm_name} will be removed now...")
+            self.proxmox.nodes(vm.target_name).qemu(vm.vm_id).delete()
+        sleep(10)
+
+        self.logger.info(f"Cleanup completed.\n")
 
     @staticmethod
     def wait_for_task(

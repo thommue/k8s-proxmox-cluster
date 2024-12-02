@@ -15,6 +15,13 @@ class NodeType(Enum):
 
 
 @dataclass
+class VmConf:
+    vm_name: str
+    target_name: str
+    vm_id: int
+
+
+@dataclass
 class SimpleVmConf:
     vm_name: str
     vm_type: VmType

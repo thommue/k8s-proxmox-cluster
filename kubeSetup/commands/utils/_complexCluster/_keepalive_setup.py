@@ -2,15 +2,11 @@ import os
 import logging
 import paramiko
 from jinja2 import Environment, FileSystemLoader
+from .._setupUtils import update_upgrade_cmd, execute_command, execute_commands, get_pwd, SSHConnectionPool
 from kubeSetup.commands.utils import (
     ComplexVmConf,
     VmType,
-    update_upgrade_cmd,
-    execute_command,
-    execute_commands,
-    NodeType,
-    get_pwd,
-    SSHConnectionPool
+    NodeType
 )
 
 

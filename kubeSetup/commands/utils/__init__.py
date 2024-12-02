@@ -19,7 +19,9 @@ __all__ = [
     "ClusterSetup",
     "ClusterType",
     "setup_logger",
-    "SSHConnectionPool"
+    "SSHConnectionPool",
+    "VmConf",
+    "parse_config_file"
 ]
 
 from ._setup import (
@@ -29,7 +31,9 @@ from ._setup import (
     ComplexVmConf,
     VmType,
     parse_complex_vm_config_file,
-    NodeType
+    NodeType,
+    VmConf,
+    parse_config_file
 )
 from ._proxmox import ProxmoxCommands
 from ._setup import ProxmoxConnection
