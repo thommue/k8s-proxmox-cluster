@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "kubesetup"
+name = "k8s-proxmox-cluster"
 version = "0.1.0"
 description = "A cli to install simple and complex kubernetese cluster"
 authors = ["mueth <muethom@icloud.com>"]

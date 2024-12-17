@@ -26,7 +26,7 @@ from .utils import (
     help="Path to the configuration file for the proxmox cluster.",
 )
 @click.option(
-    "--vm-haconfig",
+    "--vm-config",
     required=True,
     type=click.Path(exists=True),
     callback=parse_complex_vm_config_file,
@@ -41,7 +41,7 @@ from .utils import (
 )
 def complex_cluster_setup(
     proxmox_config: ProxmoxConnection,
-    vm_haconfig: list[ComplexVmConf],
+    vm_config: list[ComplexVmConf],
     kube_version: str = "1.30",
 ) -> None:
     """
@@ -60,18 +60,18 @@ def complex_cluster_setup(
     proxmox.make_required_restarts(vm_infos=vm_haconfig)  # type: ignore
 
     # set up keepalived and haproxy for HA
-    keepalived = KeepaLivedSetup(vm_infos=vm_haconfig, logger=logger)
+    keepalived = KeepaLivedSetup(vm_infos=vm_config, logger=logger)
     ssh_pool_manager = keepalived.configure_keepalived(
         ssh_pool_manager=ssh_pool_manager
     )
 
-    haproxy = HAProxySetup(vm_infos=vm_haconfig, logger=logger)
+    haproxy = HAProxySetup(vm_infos=vm_config, logger=logger)
     ssh_pool_manager = haproxy.configure_haproxy(ssh_pool_manager=ssh_pool_manager)
 
     # close connections to load balancer
     ssh_pool_manager.close_connections(
         ip_addresses=[
-            vm.ip_address for vm in vm_haconfig if vm.vm_type == VmType.LOADBALANCER
+            vm.ip_address for vm in vm_config if vm.vm_type == VmType.LOADBALANCER
         ]
     )
 

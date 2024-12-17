@@ -1,0 +1,8 @@
+{
+  "url": "<url_to_proxmox_server>",
+  "proxmox_user": "<your_user>",
+  "token_name" :  "<yout_token_name>",
+  "token": "<your_token>",
+  "ssl_verify" :  "True",
+  "template_id": 900
+}

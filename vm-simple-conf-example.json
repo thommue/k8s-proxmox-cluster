@@ -1,0 +1,28 @@
+[
+    {
+        "vm_name": "ks8-1",
+        "vm_type": "master",
+        "target_name": "<name_of_your_node>",
+        "vm_id": 500,
+        "tags": "ubuntu-24-04,kubernetes,master",
+        "clone_type": 1,
+        "ip_address": "10.0.0.2",
+        "ip_gw": "10.0.0.1",
+        "user": "<your_username>",
+        "ssh_key": "<path_to_your_ssh_keyfile>",
+        "pw": "<your_password>"
+    },
+    {
+        "vm_name": "ks8-2",
+        "vm_type": "worker",
+        "target_name": "<name_of_your_node>",
+        "vm_id": 501,
+        "tags": "ubuntu-24-04,kubernetes,worker",
+        "clone_type": 1,
+        "ip_address": "10.0.0.3",
+        "ip_gw": "10.0.0.1",
+        "user": "<your_username>",
+        "ssh_key": "<path_to_your_ssh_keyfile>",
+        "pw": "<your_password>"
+    }
+]
