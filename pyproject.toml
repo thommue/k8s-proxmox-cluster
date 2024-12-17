@@ -5,6 +5,7 @@ description = "A cli to install simple and complex kubernetese cluster"
 authors = ["mueth <muethom@icloud.com>"]
 license = "MIT"
 readme = "README.md"
+packages = [{ include = "kubeSetup" }]
 
 [tool.poetry.dependencies]
 python = "^3.12"
