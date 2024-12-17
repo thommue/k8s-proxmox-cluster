@@ -1,4 +1,3 @@
-
 __all__ = ["KeepaLivedSetup", "HAProxySetup"]
 
 from ._keepalive_setup import KeepaLivedSetup

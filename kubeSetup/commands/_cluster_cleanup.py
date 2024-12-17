@@ -5,7 +5,7 @@ from .utils import (
     ProxmoxConnection,
     ProxmoxCommands,
     VmConf,
-    setup_logger
+    setup_logger,
 )
 
 
@@ -24,10 +24,7 @@ from .utils import (
     callback=parse_config_file,
     help="Path to the configuration file for the cleanup.",
 )
-def cluster_cleanup(
-        proxmox_config: ProxmoxConnection,
-        vm_config: list[VmConf]
-) -> None:
+def cluster_cleanup(proxmox_config: ProxmoxConnection, vm_config: list[VmConf]) -> None:
     """
     Command, which cleans up the vms from the previous cluster setup. So all vms will be removed
     from the proxmox cluster.

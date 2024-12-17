@@ -21,7 +21,7 @@ __all__ = [
     "setup_logger",
     "SSHConnectionPool",
     "VmConf",
-    "parse_config_file"
+    "parse_config_file",
 ]
 
 from ._setup import (
@@ -33,10 +33,19 @@ from ._setup import (
     parse_complex_vm_config_file,
     NodeType,
     VmConf,
-    parse_config_file
+    parse_config_file,
 )
 from ._proxmox import ProxmoxCommands
 from ._setup import ProxmoxConnection
 from ._clusterSetup import ClusterSetup, ClusterType
 from ._complexCluster import KeepaLivedSetup, HAProxySetup
-from ._setupUtils import execute_command, execute_commands, update_upgrade_cmd, setup_client, get_pwd, PreconfigureCluster, setup_logger, SSHConnectionPool
+from ._setupUtils import (
+    execute_command,
+    execute_commands,
+    update_upgrade_cmd,
+    setup_client,
+    get_pwd,
+    PreconfigureCluster,
+    setup_logger,
+    SSHConnectionPool,
+)

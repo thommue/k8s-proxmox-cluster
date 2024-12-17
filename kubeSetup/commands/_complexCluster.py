@@ -1,4 +1,5 @@
 import click
+from typing import cast
 from .utils import (
     parse_proxmox_config_file,
     parse_complex_vm_config_file,
@@ -12,7 +13,7 @@ from .utils import (
     ClusterType,
     VmType,
     setup_logger,
-    SSHConnectionPool
+    SSHConnectionPool,
 )
 
 
@@ -39,9 +40,9 @@ from .utils import (
     help="Kubernetes version, which will be used for the cluster setup.",
 )
 def complex_cluster_setup(
-        proxmox_config: ProxmoxConnection,
-        vm_haconfig: list[ComplexVmConf],
-        kube_version: str = "1.30"
+    proxmox_config: ProxmoxConnection,
+    vm_haconfig: list[ComplexVmConf],
+    kube_version: str = "1.30",
 ) -> None:
     """
     Command, which sets up a complex HA kubernetes cluster, which can be seen in the image below.
@@ -55,26 +56,28 @@ def complex_cluster_setup(
     ssh_pool_manager = SSHConnectionPool()
 
     proxmox = ProxmoxCommands(proxmox_conf=proxmox_config, logger=logger)
-    proxmox.clone_vm(vm_infos=vm_haconfig)
-    proxmox.make_required_restarts(vm_infos=vm_haconfig)
+    proxmox.clone_vm(vm_infos=vm_haconfig)  # type: ignore
+    proxmox.make_required_restarts(vm_infos=vm_haconfig)  # type: ignore
 
     # set up keepalived and haproxy for HA
     keepalived = KeepaLivedSetup(vm_infos=vm_haconfig, logger=logger)
-    ssh_pool_manager = keepalived.configure_keepalived(ssh_pool_manager=ssh_pool_manager)
+    ssh_pool_manager = keepalived.configure_keepalived(
+        ssh_pool_manager=ssh_pool_manager
+    )
 
     haproxy = HAProxySetup(vm_infos=vm_haconfig, logger=logger)
     ssh_pool_manager = haproxy.configure_haproxy(ssh_pool_manager=ssh_pool_manager)
 
     # close connections to load balancer
     ssh_pool_manager.close_connections(
-        ip_addresses=[vm.ip_address for vm in vm_haconfig if vm.vm_type == VmType.LOADBALANCER]
+        ip_addresses=[
+            vm.ip_address for vm in vm_haconfig if vm.vm_type == VmType.LOADBALANCER
+        ]
     )
 
     # preconfigure the cluster
     preconf = PreconfigureCluster(
-        vm_infos=vm_haconfig,
-        logger=logger,
-        kube_version=kube_version
+        vm_infos=vm_haconfig, logger=logger, kube_version=kube_version  # type: ignore
     )
     grouped_vms, ssh_pool_manager = preconf.preconfigure_vms(
         ssh_pool_manager=ssh_pool_manager
@@ -84,9 +87,11 @@ def complex_cluster_setup(
     ClusterSetup.setup_cluster(
         group_vms=grouped_vms,
         cluster_type=ClusterType.COMPLEX,
-        control_plane_endpoint=grouped_vms[VmType.LOADBALANCER.value][0].virtual_ip_address,
+        control_plane_endpoint=grouped_vms[VmType.LOADBALANCER.value][  # type: ignore
+            0
+        ].virtual_ip_address,
         logger=logger,
-        ssh_pool_manager=ssh_pool_manager
+        ssh_pool_manager=ssh_pool_manager,
     )
 
     # close all connections

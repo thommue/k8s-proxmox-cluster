@@ -9,7 +9,7 @@ from .utils import (
     ClusterSetup,
     ClusterType,
     setup_logger,
-    SSHConnectionPool
+    SSHConnectionPool,
 )
 
 
@@ -36,9 +36,7 @@ from .utils import (
     help="Kubernetes version, which will be used for the cluster setup.",
 )
 def simple_cluster_setup(
-    proxmox_config: ProxmoxConnection,
-    vm_config: list[SimpleVmConf],
-    kube_version: str
+    proxmox_config: ProxmoxConnection, vm_config: list[SimpleVmConf], kube_version: str
 ) -> None:
     """
     Command, which sets up a simple kubernetes cluster, which can be seen in the image below.

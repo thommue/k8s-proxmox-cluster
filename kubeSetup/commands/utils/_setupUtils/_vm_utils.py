@@ -1,8 +1,11 @@
 import paramiko
+from typing import Optional
 from .._setup import SimpleVmConf, ComplexVmConf, VmType
 
 
-def setup_client(group_vms: dict[str, list[SimpleVmConf | ComplexVmConf]] = None) -> paramiko.SSHClient:
+def setup_client(
+    group_vms: Optional[dict[str, list[SimpleVmConf | ComplexVmConf]]] = None
+) -> paramiko.SSHClient:
     # set up the client
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())

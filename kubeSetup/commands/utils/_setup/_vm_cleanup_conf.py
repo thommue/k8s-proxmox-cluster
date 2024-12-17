@@ -20,7 +20,7 @@ def _convert(conf: Any) -> VmConf:
 
 
 def parse_config_file(_: Any, param: click.Parameter, value: str) -> list[VmConf]:
-    if value.endswith('.json'):
+    if value.endswith(".json"):
         with open(value, "r") as file:
             conf_dict = json.load(file)
             return [_convert(conf=config) for config in conf_dict]

@@ -16,7 +16,7 @@ test_conf_01 = [
         "memory": "4092",
         "disk_size": "32",
         "user": "tom",
-        "ssh_key": "C:\\Users\\mueth\\.ssh\\homelab"
+        "ssh_key": "C:\\Users\\mueth\\.ssh\\homelab",
     },
     {
         "vm_name": "test_02",
@@ -29,7 +29,7 @@ test_conf_01 = [
         "memory": 4092,
         "disk_size": 32,
         "user": "tom",
-        "ssh_key": "C:\\Users\\mueth\\.ssh\\homelab"
+        "ssh_key": "C:\\Users\\mueth\\.ssh\\homelab",
     },
 ]
 
@@ -45,7 +45,7 @@ test_conf_02 = [
         "memory": "4092",
         "disk_size": "32",
         "user": "tom",
-        "ssh_key": "C:\\Users\\mueth\\.ssh\\homelab"
+        "ssh_key": "C:\\Users\\mueth\\.ssh\\homelab",
     }
 ]
 
@@ -60,7 +60,7 @@ test_conf_03 = [
         "cores": "4",
         "disk_size": "32",
         "user": "tom",
-        "ssh_key": "C:\\Users\\mueth\\.ssh\\homelab"
+        "ssh_key": "C:\\Users\\mueth\\.ssh\\homelab",
     },
     {
         "vm_name": "test_02",
@@ -73,7 +73,7 @@ test_conf_03 = [
         "memory": 4092,
         "disk_size": 32,
         "user": "tom",
-        "ssh_key": "C:\\Users\\mueth\\.ssh\\homelab"
+        "ssh_key": "C:\\Users\\mueth\\.ssh\\homelab",
     },
 ]
 
@@ -86,7 +86,7 @@ test_conf_04 = [
         "memory": "4092",
         "disk_size": "32",
         "user": "tom",
-        "ssh_key": "C:\\Users\\mueth\\.ssh\\homelab"
+        "ssh_key": "C:\\Users\\mueth\\.ssh\\homelab",
     },
     {
         "vm_name": "test_02",

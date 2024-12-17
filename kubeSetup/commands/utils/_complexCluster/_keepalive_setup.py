@@ -1,13 +1,16 @@
 import os
 import logging
 import paramiko
+from typing import Optional
 from jinja2 import Environment, FileSystemLoader
-from .._setupUtils import update_upgrade_cmd, execute_command, execute_commands, get_pwd, SSHConnectionPool
-from kubeSetup.commands.utils import (
-    ComplexVmConf,
-    VmType,
-    NodeType
+from .._setupUtils import (
+    update_upgrade_cmd,
+    execute_command,
+    execute_commands,
+    get_pwd,
+    SSHConnectionPool,
 )
+from kubeSetup.commands.utils import ComplexVmConf, VmType, NodeType
 
 
 class KeepaLivedSetup:
@@ -15,7 +18,9 @@ class KeepaLivedSetup:
         self.vm_infos = vm_infos
         self.logger = logger
 
-    def configure_keepalived(self, ssh_pool_manager: SSHConnectionPool) -> SSHConnectionPool:
+    def configure_keepalived(
+        self, ssh_pool_manager: SSHConnectionPool
+    ) -> SSHConnectionPool:
 
         for vm in self.vm_infos:
             if vm.vm_type == VmType.LOADBALANCER:
@@ -27,7 +32,9 @@ class KeepaLivedSetup:
                 )
 
                 # update and upgrade the vm
-                update_upgrade_cmd(client=client_connection, upgrade=True, logger=self.logger)
+                update_upgrade_cmd(
+                    client=client_connection, upgrade=True, logger=self.logger
+                )
 
                 # install keepalived
                 execute_command(
@@ -39,16 +46,20 @@ class KeepaLivedSetup:
                 # generate conf and transfer conf file
                 self._keepalived_setup(
                     client=client_connection,
-                    node_state=vm.node_state,
-                    virtual_ip=vm.virtual_ip_address
+                    node_state=vm.node_state,  # type: ignore
+                    virtual_ip=vm.virtual_ip_address,  # type: ignore
                 )
 
         return ssh_pool_manager
 
-    def _keepalived_setup(self, client: paramiko.SSHClient, node_state: NodeType, virtual_ip: str):
+    def _keepalived_setup(
+        self, client: paramiko.SSHClient, node_state: NodeType, virtual_ip: str
+    ) -> None:
         pwd = get_pwd(client=client, logger=self.logger)
 
-        temp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_templates")
+        temp_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "_templates"
+        )
 
         sftp = client.open_sftp()
 
@@ -81,7 +92,7 @@ class KeepaLivedSetup:
             "sudo mv keepalived.conf /etc/keepalived/keepalived.conf",
             "sudo mv check_apiserver.sh /etc/keepalived/check_apiserver.sh",
             "sudo systemctl start keepalived",
-            "sudo systemctl enable keepalived"
+            "sudo systemctl enable keepalived",
         ]
         execute_commands(
             cmds=cmds,
@@ -91,14 +102,14 @@ class KeepaLivedSetup:
 
     @staticmethod
     def setup_keepalived_conf(
-            node_state: str,
-            node_interface: str,
-            virtual_router_id: str,
-            node_prio: str,
-            auth_pass: str,
-            virtual_ip: str,
-            temp_path: str
-    ):
+        node_state: str,
+        node_interface: str,
+        virtual_router_id: str,
+        node_prio: str,
+        auth_pass: str,
+        virtual_ip: str,
+        temp_path: str,
+    ) -> str:
         template = Environment(loader=FileSystemLoader(temp_path)).get_template(
             "keepalived-conf.j2"
         )
@@ -112,7 +123,7 @@ class KeepaLivedSetup:
         )
 
     @staticmethod
-    def setup_check_script(virtual_ip: str, temp_path: str):
+    def setup_check_script(virtual_ip: str, temp_path: str) -> str:
         template = Environment(loader=FileSystemLoader(temp_path)).get_template(
             "check_apiserver-template.j2"
         )

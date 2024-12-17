@@ -28,7 +28,7 @@ class ProxmoxCommands:
                     newid=vm.vm_id,
                     name=vm.vm_name,
                     target=vm.target_name,
-                    full=vm.clone_type
+                    full=vm.clone_type,
                 )
             )
 
@@ -42,7 +42,7 @@ class ProxmoxCommands:
             self._prg_bar(
                 sleep_time=10,
                 desc=f"The config will be set for {vm.vm_id} - {vm.vm_name}\n",
-                logger=self.logger
+                logger=self.logger,
             )
 
             self.proxmox.nodes(vm.target_name).qemu(vm.vm_id).config.set(
@@ -65,19 +65,17 @@ class ProxmoxCommands:
             self._prg_bar(
                 sleep_time=15,
                 desc=f"Starting up {vm.vm_id} - {vm.vm_name}\n",
-                logger=self.logger
+                logger=self.logger,
             )
 
-    def make_required_restarts(self, vm_infos: list[SimpleVmConf | ComplexVmConf]) -> None:
+    def make_required_restarts(
+        self, vm_infos: list[SimpleVmConf | ComplexVmConf]
+    ) -> None:
         """
         Tries to SSH into the VM and checks if connection can be established.
         If the connection is established, it will be restarted the vm.
         """
-        self._prg_bar(
-            sleep_time=125,
-            desc="Initial start up\n",
-            logger=self.logger
-        )
+        self._prg_bar(sleep_time=125, desc="Initial start up\n", logger=self.logger)
 
         for vm in vm_infos:
             self.logger.info(f"{vm.vm_id} - {vm.vm_name} will be shutdown now...")
@@ -86,7 +84,7 @@ class ProxmoxCommands:
         self._prg_bar(
             sleep_time=25,
             desc="Waiting for the shutdown to finish\n",
-            logger=self.logger
+            logger=self.logger,
         )
 
         for vm in vm_infos:
@@ -98,7 +96,7 @@ class ProxmoxCommands:
         self._prg_bar(
             sleep_time=150,
             desc="Waiting for the restart task to finish\n",
-            logger=self.logger
+            logger=self.logger,
         )
 
     def cleanup_vm(self, vm_infos: list[VmConf]) -> None:
@@ -108,7 +106,7 @@ class ProxmoxCommands:
         self._prg_bar(
             sleep_time=25,
             desc="Waiting for the shutdown to finish\n",
-            logger=self.logger
+            logger=self.logger,
         )
 
         for vm in vm_infos:
@@ -117,19 +115,19 @@ class ProxmoxCommands:
         self._prg_bar(
             sleep_time=10,
             desc="Waiting for the delete task to finish\n",
-            logger=self.logger
+            logger=self.logger,
         )
 
         self.logger.info(f"Cleanup completed.\n")
 
     @staticmethod
     def wait_for_task(
-            proxmox: ProxmoxAPI,
-            node: str,
-            task_id: Any,
-            logger: logging.Logger,
-            timeout: int = 300,
-            interval: int = 10,
+        proxmox: ProxmoxAPI,
+        node: str,
+        task_id: Any,
+        logger: logging.Logger,
+        timeout: int = 300,
+        interval: int = 10,
     ) -> None:
         sleep(2)
         start_time = perf_counter()

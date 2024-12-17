@@ -41,8 +41,8 @@ class SimpleVmConf:
 
 @dataclass
 class ComplexVmConf(SimpleVmConf):
-    virtual_ip_address: str = None
-    node_state: NodeType = None
+    virtual_ip_address: Optional[str] = None
+    node_state: Optional[NodeType] = None
 
 
 @dataclass
