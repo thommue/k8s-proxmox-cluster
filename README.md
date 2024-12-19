@@ -1,5 +1,5 @@
 
-# 🚀 Kubernetes Cluster Setup with Proxmox Integration
+# 🚀 Kubernetes Cluster Setup with Proxmox Integration (Python)
 
 Welcome to k8s-proxmox-cluster, a streamlined solution for setting up Kubernetes clusters – whether simple or complex – with ease. 
 This package automates the deployment process, starting from cloning virtual machines on a Proxmox server to bootstrapping 
