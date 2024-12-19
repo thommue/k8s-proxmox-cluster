@@ -55,9 +55,7 @@ def simple_cluster_setup(
 
     # preconfigure the cluster
     preconf = PreconfigureCluster(
-        vm_infos=vm_config,
-        logger=logger,
-        kube_version=kube_version
+        vm_infos=vm_config, logger=logger, kube_version=kube_version
     )
     grouped_vms, ssh_pool_manager = preconf.preconfigure_vms(
         ssh_pool_manager=ssh_pool_manager
@@ -68,7 +66,7 @@ def simple_cluster_setup(
         group_vms=grouped_vms,
         cluster_type=ClusterType.SIMPLE,
         logger=logger,
-        ssh_pool_manager=ssh_pool_manager
+        ssh_pool_manager=ssh_pool_manager,
     )
 
     # close all connections
