@@ -68,12 +68,12 @@ pip install k8s-proxmox-cluster
 
 for a simple setup:
 ```
-simple-cluster-setup --proxmox-config <PATH_TO_YOUR_CONF_FILE> --vm-config <PATH_TO_YOUR_CONF_FILE>
+python -m kubeSetup simple-cluster-setup --proxmox-config <PATH_TO_YOUR_CONF_FILE> --vm-config <PATH_TO_YOUR_CONF_FILE>
 ```
 
 for a complex setup:
 ```
-complex-cluster-setup --proxmox-config <PATH_TO_YOUR_CONF_FILE> --vm-config <PATH_TO_YOUR_CONF_FILE>
+python -m kubeSetup complex-cluster-setup --proxmox-config <PATH_TO_YOUR_CONF_FILE> --vm-config <PATH_TO_YOUR_CONF_FILE>
 ```
 
 ## 🧹 Cleanup
@@ -83,5 +83,5 @@ complex-cluster-setup --proxmox-config <PATH_TO_YOUR_CONF_FILE> --vm-config <PAT
 If you need to delete the entire cluster, including all virtual machines, use the following command with the same 
 configuration files:
 ```
-cluster-cleanup --proxmox-config <PATH_TO_YOUR_CONF_FILE> --vm-config <PATH_TO_YOUR_CONF_FILE>
+python -m kubeSetup cluster-cleanup --proxmox-config <PATH_TO_YOUR_CONF_FILE> --vm-config <PATH_TO_YOUR_CONF_FILE>
 ```

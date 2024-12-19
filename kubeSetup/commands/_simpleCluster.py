@@ -53,26 +53,26 @@ def simple_cluster_setup(
     proxmox.clone_vm(vm_infos=vm_config)
     proxmox.make_required_restarts(vm_infos=vm_config)
 
-    # # preconfigure the cluster
-    # preconf = PreconfigureCluster(
-    #     vm_infos=vm_config,
-    #     logger=logger,
-    #     kube_version=kube_version
-    # )
-    # grouped_vms, ssh_pool_manager = preconf.preconfigure_vms(
-    #     ssh_pool_manager=ssh_pool_manager
-    # )
-    #
-    # # set up the simple cluster
-    # ClusterSetup.setup_cluster(
-    #     group_vms=grouped_vms,
-    #     cluster_type=ClusterType.SIMPLE,
-    #     logger=logger,
-    #     ssh_pool_manager=ssh_pool_manager
-    # )
-    #
-    # # close all connections
-    # ssh_pool_manager.close_all_connections()
+    # preconfigure the cluster
+    preconf = PreconfigureCluster(
+        vm_infos=vm_config,
+        logger=logger,
+        kube_version=kube_version
+    )
+    grouped_vms, ssh_pool_manager = preconf.preconfigure_vms(
+        ssh_pool_manager=ssh_pool_manager
+    )
+
+    # set up the simple cluster
+    ClusterSetup.setup_cluster(
+        group_vms=grouped_vms,
+        cluster_type=ClusterType.SIMPLE,
+        logger=logger,
+        ssh_pool_manager=ssh_pool_manager
+    )
+
+    # close all connections
+    ssh_pool_manager.close_all_connections()
 
 
 if __name__ == "__main__":
