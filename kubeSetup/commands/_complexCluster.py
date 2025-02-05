@@ -36,13 +36,13 @@ from .utils import (
     "--kube-version",
     required=False,
     type=click.STRING,
-    default="1.30",
+    default="1.32",
     help="Kubernetes version, which will be used for the cluster setup.",
 )
 def complex_cluster_setup(
     proxmox_config: ProxmoxConnection,
     vm_config: list[ComplexVmConf],
-    kube_version: str = "1.30",
+    kube_version: str = "1.32",
 ) -> None:
     """
     Command, which sets up a complex HA kubernetes cluster, which can be seen in the image below.
@@ -55,29 +55,29 @@ def complex_cluster_setup(
     # setup SSH connection pool manager
     ssh_pool_manager = SSHConnectionPool()
 
-    proxmox = ProxmoxCommands(proxmox_conf=proxmox_config, logger=logger)
-    proxmox.clone_vm(vm_infos=vm_haconfig)  # type: ignore
-    proxmox.make_required_restarts(vm_infos=vm_haconfig)  # type: ignore
-
-    # set up keepalived and haproxy for HA
-    keepalived = KeepaLivedSetup(vm_infos=vm_config, logger=logger)
-    ssh_pool_manager = keepalived.configure_keepalived(
-        ssh_pool_manager=ssh_pool_manager
-    )
-
-    haproxy = HAProxySetup(vm_infos=vm_config, logger=logger)
-    ssh_pool_manager = haproxy.configure_haproxy(ssh_pool_manager=ssh_pool_manager)
-
-    # close connections to load balancer
-    ssh_pool_manager.close_connections(
-        ip_addresses=[
-            vm.ip_address for vm in vm_config if vm.vm_type == VmType.LOADBALANCER
-        ]
-    )
+    # proxmox = ProxmoxCommands(proxmox_conf=proxmox_config, logger=logger)
+    # # proxmox.clone_vm(vm_infos=vm_config)  # type: ignore
+    # proxmox.make_required_restarts(vm_infos=vm_config)  # type: ignore
+    #
+    # # set up keepalived and haproxy for HA
+    # keepalived = KeepaLivedSetup(vm_infos=vm_config, logger=logger)
+    # ssh_pool_manager = keepalived.configure_keepalived(
+    #     ssh_pool_manager=ssh_pool_manager
+    # )
+    #
+    # haproxy = HAProxySetup(vm_infos=vm_config, logger=logger)
+    # ssh_pool_manager = haproxy.configure_haproxy(ssh_pool_manager=ssh_pool_manager)
+    #
+    # # close connections to load balancer
+    # ssh_pool_manager.close_connections(
+    #     ip_addresses=[
+    #         vm.ip_address for vm in vm_config if vm.vm_type == VmType.LOADBALANCER
+    #     ]
+    # )
 
     # preconfigure the cluster
     preconf = PreconfigureCluster(
-        vm_infos=vm_haconfig, logger=logger, kube_version=kube_version  # type: ignore
+        vm_infos=vm_config, logger=logger, kube_version=kube_version  # type: ignore
     )
     grouped_vms, ssh_pool_manager = preconf.preconfigure_vms(
         ssh_pool_manager=ssh_pool_manager
