@@ -58,8 +58,7 @@ class ProxmoxCommands:
 
             if vm.disk_size is not None:
                 self.proxmox.nodes(vm.target_name).qemu(vm.vm_id).resize.put(
-                    disk="virtio0",
-                    size=f"+{vm.disk_size}G"
+                    disk="virtio0", size=f"+{vm.disk_size}G"
                 )
                 sleep(10)
             sleep(5)
